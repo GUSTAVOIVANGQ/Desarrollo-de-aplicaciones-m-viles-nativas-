@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">MyXApplication</string>
+    <string name="main_menu_title">Select an Application</string>
+    <string name="calculator">Calculator</string>
+    <string name="chronometer">Chronometer</string>
+    <string name="start">Start</string>
+    <string name="pause">Pause</string>
+    <string name="reset">Reset</string>
+    <string name="chronometer_title">Stopwatch</string>
+</resources>
