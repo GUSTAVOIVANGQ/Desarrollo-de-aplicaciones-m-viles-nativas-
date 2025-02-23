@@ -19,6 +19,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Calculadora y Cronómetro"
+rootProject.name = "MyXApplication"
 include(":app")
  
