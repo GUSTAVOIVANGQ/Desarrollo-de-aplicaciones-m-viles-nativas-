@@ -1,4 +1,3 @@
-// MainActivity.java
 package com.example.solarsystemexplorer;
 
 import androidx.appcompat.app.AppCompatActivity;
