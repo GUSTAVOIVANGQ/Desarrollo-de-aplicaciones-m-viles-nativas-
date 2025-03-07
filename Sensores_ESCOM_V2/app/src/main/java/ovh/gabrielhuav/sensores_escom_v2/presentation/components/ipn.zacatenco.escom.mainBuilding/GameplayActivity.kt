@@ -238,6 +238,7 @@ class GameplayActivity : AppCompatActivity(),
                     when (targetDestination) {
                         "edificio2" -> startBuildingActivity()
                         "cafeteria" -> startCafeteriaActivity()
+                        "auditorio" -> startAuditorioActivity()
                         else -> showToast("No hay interacción disponible en esta posición")
                     }
                 } else {
@@ -272,6 +273,18 @@ class GameplayActivity : AppCompatActivity(),
         finish()
     }
 
+    private fun startAuditorioActivity() {
+    val intent = Intent(this, Auditorio::class.java).apply {
+        putExtra("PLAYER_NAME", playerName)
+        putExtra("IS_SERVER", gameState.isServer)
+        putExtra("INITIAL_POSITION", Pair(1, 1))
+        putExtra("PREVIOUS_POSITION", gameState.playerPosition)
+        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+    }
+    startActivity(intent)
+    finish()
+}
+
     private var canChangeMap = false  // Variable para controlar si se puede cambiar de mapa
     private var targetDestination: String? = null  // Variable para almacenar el destino
 
@@ -292,6 +305,13 @@ class GameplayActivity : AppCompatActivity(),
                     Toast.makeText(this, "Presiona A para entrar a la cafetería", Toast.LENGTH_SHORT).show()
                 }
             }
+            position.first == 7 && position.second == 20 -> {
+            canChangeMap = true
+            targetDestination = "auditorio"
+            runOnUiThread {
+                Toast.makeText(this, "Presiona A para entrar al auditorio", Toast.LENGTH_SHORT).show()
+            }
+        }
             else -> {
                 canChangeMap = false
                 targetDestination = null

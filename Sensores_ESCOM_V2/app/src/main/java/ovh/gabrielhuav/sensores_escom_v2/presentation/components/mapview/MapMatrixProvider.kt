@@ -28,6 +28,7 @@ class MapMatrixProvider {
         const val MAP_SALON2010 = "escom_salon2010"
         const val MAP_CAFETERIA = "escom_cafeteria"
         const val MAP_BIBLIOTECA = "escom_biblioteca"
+        const val MAP_AUDITORIO = "escom_auditorio"
 
         // Puntos de transición entre mapas
         val MAIN_TO_BUILDING2_POSITION = Pair(15, 10)
@@ -46,6 +47,10 @@ class MapMatrixProvider {
         val MAIN_TO_BIBLIOTECA_POSITION = Pair(30, 30)  // Desde mapa principal
         val BIBLIOTECA_TO_MAIN_POSITION = Pair(5, 38)   // Vuelta al mapa principal
 
+        // Agregar punto de transición para el auditorio
+        val MAIN_TO_AUDITORIO_POSITION = Pair(7, 20)
+        val AUDITORIO_TO_MAIN_POSITION = Pair(1, 1)
+
         /**
          * Obtiene la matriz para el mapa especificado
          */
@@ -57,6 +62,7 @@ class MapMatrixProvider {
                 MAP_SALON2010 -> createSalon2010Matrix()  // Nueva matriz para el salón 2010
                 MAP_CAFETERIA -> createCafeESCOMMatrix()
                 MAP_BIBLIOTECA -> createBibliotecaMatrix()
+                MAP_AUDITORIO -> createAuditorioMatrix()
                 else -> createDefaultMatrix() // Por defecto, un mapa básico
             }
         }
@@ -133,6 +139,41 @@ class MapMatrixProvider {
          * +-------------------------------------------------------------------------+
          */
 
+        /**
+        *Matrix for auditorio
+         * Based exactly on the ASCII map:
+        ╔══════════╦═════════════════════════════════════════════════════════════════╦════════╗
+        ║          ║              ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓                   ║       ║
+        ║          ║                                                                  ║       ║
+        ║          ║                                                                  ║       ║
+        ║          ║                   Scenario                                       ║       ║
+        ║          ║                                                                  ║       ║
+        ║          ║ Ladders║                                                 ║Ladders║       ║
+        ║          ║ ↗️↘️  ║                                                  ║ ↗️↘️ ║       ║
+        ╠══════════╩       ╩══════════════════════════════════════════════════╩       ╩═══════╣
+        🚪Exit                                                                            Exit🚪
+        🚪Exit                                                                            Exit🚪
+        ║                                                                                     ║
+        ║ ┌────────────────────┐       ┌──────────────────────────┐       ┌────────────────┐  ║
+        ║ │   [_]   [_]   [_]  │       │   [_]   [_]   [_]   [_]  │       │ [_]   [_]   [_]│  ║
+        ║ │   [_]   [_]   [_]  │       │   [_]   [_]   [_]   [_]  │       │ [_]   [_]   [_]│  ║
+        ║ │   [_]   [_]   [_]  │       │   [_]   [_]   [_]   [_]  │       │ [_]   [_]   [_]│  ║
+        ║ │   [_]   [_]   [_]  │       │   [_]   [_]   [_]   [_]  │       │ [_]   [_]   [_]│  ║
+        ║ │   [_]   [_]   [_]  │       │   [_]   [_]   [_]   [_]  │       │ [_]   [_]   [_]│  ║
+        ║ │   [_]   [_]   [_]  │       │   [_]   [_]   [_]   [_]  │       │ [_]   [_]   [_]│  ║
+        ║ │   [_]   [_]   [_]  │       │   [_]   [_]   [_]   [_]  │       │ [_]   [_]   [_]│  ║
+        ║ │   [_]   [_]   [_]  │       │   [_]   [_]   [_]   [_]  │       │ [_]   [_]   [_]│  ║
+        ║ │   [_]   [_]   [_]  │       │   [_]   [_]   [_]   [_]  │       │ [_]   [_]   [_]│  ║
+        ║ │   [_]   [_]   [_]  │       │   [_]   [_]   [_]   [_]  │       │ [_]   [_]   [_]│  ║
+        ║ │   [_]   [_]   [_]  │       │   [_]   [_]   [_]   [_]  │       │ [_]   [_]   [_]│  ║
+        ║ │   [_]   [_]   [_]  │       │   [_]   [_]   [_]   [_]  │       │ [_]   [_]   [_]│  ║
+        ║ │   [_]   [_]   [_]  │       │   [_]   [_]   [_]   [_]  │       │ [_]   [_]   [_]│  ║
+        ║ └────────────────────┘       └──────────────────────────┘       └────────────────┘  ║
+        ║                                                                                     ║
+        ╠══════════╦═══════════════════════════════════════════════════════════════╦══════════╣
+        ║          ║                                                               ║          ║
+        ╚═🚪🚪      ╚═══════════════════════════════════════════════════════════════╝     🚪🚪═╝
+        */
 
         /**
          * Approach 5: ASCII Art-Based Implementation
@@ -527,6 +568,13 @@ class MapMatrixProvider {
         }
 
         /**
+         * Matriz para el auditorio
+         */
+        private fun createAuditorioMatrix(): Array<Array<Int>> {
+            return AuditorioMap.mapaAuditorio
+        }
+
+        /**
          * Matriz predeterminada para cualquier otro mapa
          */
         private fun createDefaultMatrix(): Array<Array<Int>> {
@@ -603,7 +651,15 @@ class MapMatrixProvider {
                 return MAP_MAIN
             }
 
-            // Resto de transiciones...
+            // Añadir transición al auditorio
+            if (mapId == MAP_MAIN && x == MAIN_TO_AUDITORIO_POSITION.first && 
+                y == MAIN_TO_AUDITORIO_POSITION.second) {
+                return MAP_AUDITORIO
+            }
+            
+            if (mapId == MAP_AUDITORIO && AuditorioMap.isExit(x, y)) {
+                return MAP_MAIN
+            }
 
             return null
         }
@@ -620,6 +676,7 @@ class MapMatrixProvider {
                 MAP_SALON2010 -> Pair(20, 20)  // Posición central dentro del salón 2010
                 MAP_CAFETERIA -> Pair(2, 2)  // Posición central dentro de la escomCAFE
                 MAP_BIBLIOTECA -> Pair(20, 35)  // Posición inicial en la biblioteca
+                MAP_AUDITORIO -> AuditorioMap.getSpawnPoints().firstOrNull() ?: Pair(1, 1)
                 else -> Pair(MAP_WIDTH / 2, MAP_HEIGHT / 2)
             }
         }
@@ -675,19 +732,26 @@ class MapMatrix(private val mapId: String) {
     }
 
     fun drawMatrix(canvas: Canvas, width: Float, height: Float) {
-        val cellWidth = width / MapMatrixProvider.MAP_WIDTH
-        val cellHeight = height / MapMatrixProvider.MAP_HEIGHT
+        val matrixHeight = matrix.size
+        val matrixWidth = if (matrixHeight > 0) matrix[0].size else 0
+        
+        val cellWidth = width / matrixWidth
+        val cellHeight = height / matrixHeight
 
-        for (y in 0 until MapMatrixProvider.MAP_HEIGHT) {
-            for (x in 0 until MapMatrixProvider.MAP_WIDTH) {
-                val paint = paints[matrix[y][x]] ?: paints[MapMatrixProvider.PATH]!!
-                canvas.drawRect(
-                    x * cellWidth,    // left
-                    y * cellHeight,   // top
-                    (x + 1) * cellWidth,  // right
-                    (y + 1) * cellHeight, // bottom
-                    paint
-                )
+        for (y in 0 until matrixHeight) {
+            for (x in 0 until matrixWidth) {
+                try {
+                    val paint = paints[matrix[y][x]] ?: paints[MapMatrixProvider.PATH]!!
+                    canvas.drawRect(
+                        x * cellWidth,    // left
+                        y * cellHeight,   // top
+                        (x + 1) * cellWidth,  // right
+                        (y + 1) * cellHeight, // bottom
+                        paint
+                    )
+                } catch (e: Exception) {
+                    Log.e("MapMatrix", "Error drawing cell at ($x, $y)", e)
+                }
             }
         }
     }

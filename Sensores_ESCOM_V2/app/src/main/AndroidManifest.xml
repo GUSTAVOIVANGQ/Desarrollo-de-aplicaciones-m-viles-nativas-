@@ -72,7 +72,12 @@
             android:theme="@style/Theme.Sensores_ESCOM_V2" />
 
         <activity
-            android:name=".presentation.components.Biblioteca"
+            android:name=".presentation.components.ipn.zacatenco.escom.biblioteca.Biblioteca"
+            android:configChanges="orientation|screenSize|keyboardHidden"/>
+
+        <!-- Agregar la nueva Activity del Auditorio -->
+        <activity
+            android:name=".presentation.components.Auditorio"
             android:configChanges="orientation|screenSize|keyboardHidden"/>
     </application>
 
