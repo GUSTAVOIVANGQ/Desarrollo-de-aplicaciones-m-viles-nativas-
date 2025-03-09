@@ -122,7 +122,7 @@ class Auditorio : AppCompatActivity(),
         // Mostrar estado de conexión
         updateBluetoothStatus("Conectando al servidor online...")
 
-        serverConnectionManager.connectToServer { success -> 
+        serverConnectionManager.connectToServer { success ->
             runOnUiThread {
                 gameState.isConnected = success
 
@@ -202,6 +202,48 @@ class Auditorio : AppCompatActivity(),
         findViewById<Button?>(R.id.button_small_2)?.setOnClickListener {
             returnToBuilding2()
         }
+
+        // Configurar el botón de regreso (BCK)
+        findViewById<Button>(R.id.button_back)?.setOnClickListener {
+            handleBackButtonPressed()
+        }
+
+        // También configurar el botón back to home para el mismo comportamiento
+        findViewById<Button>(R.id.button_back_to_home)?.setOnClickListener {
+            handleBackButtonPressed()
+        }
+    }
+
+    private fun handleBackButtonPressed() {
+        // Enviar mensaje de que el jugador está saliendo del auditorio
+        if (gameState.isConnected) {
+            serverConnectionManager.sendUpdateMessage(
+                playerName,
+                MapMatrixProvider.MAIN_TO_AUDITORIO_POSITION, // Usar la posición de entrada al auditorio
+                MapMatrixProvider.MAP_MAIN // Indicar que regresamos al mapa principal
+            )
+        }
+
+        // Crear intent para volver al mapa principal
+        val intent = Intent(this, GameplayActivity::class.java).apply {
+            putExtra("PLAYER_NAME", playerName)
+            putExtra("IS_SERVER", gameState.isServer)
+            putExtra("IS_CONNECTED", gameState.isConnected)
+            putExtra("INITIAL_POSITION", MapMatrixProvider.MAIN_TO_AUDITORIO_POSITION)
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+        }
+
+        // Limpiar recursos antes de salir
+        mapView.playerManager.cleanup()
+        
+        // Iniciar la actividad del mapa principal
+        startActivity(intent)
+        finish()
+    }
+
+    // También sobrescribir onBackPressed para usar la misma lógica
+    override fun onBackPressed() {
+        handleBackButtonPressed()
     }
 
     private fun returnToBuilding2() {
@@ -324,11 +366,10 @@ class Auditorio : AppCompatActivity(),
                                 )
                                 val map = playerData.getString("map")
 
-                                // Actualizar la posición del jugador en el mapa
+                                // Cambiar BuildingNumber2.GameState.PlayerInfo por GameState.PlayerInfo
                                 gameState.remotePlayerPositions = gameState.remotePlayerPositions +
                                         (playerId to GameState.PlayerInfo(position, map))
 
-                                // Solo mostrar jugadores que estén en el mismo mapa
                                 if (map == MapMatrixProvider.MAP_SALON2009) {
                                     mapView.updateRemotePlayerPosition(playerId, position, map)
                                     Log.d(TAG, "Updated remote player $playerId position to $position in map $map")
@@ -345,11 +386,10 @@ class Auditorio : AppCompatActivity(),
                             )
                             val map = jsonObject.getString("map")
 
-                            // Actualizar el estado del jugador
+                            // Cambiar BuildingNumber2.GameState.PlayerInfo por GameState.PlayerInfo
                             gameState.remotePlayerPositions = gameState.remotePlayerPositions +
                                     (playerId to GameState.PlayerInfo(position, map))
 
-                            // Solo mostrar jugadores que estén en el mismo mapa
                             if (map == MapMatrixProvider.MAP_SALON2009) {
                                 mapView.updateRemotePlayerPosition(playerId, position, map)
                                 Log.d(TAG, "Updated remote player $playerId position to $position in map $map")

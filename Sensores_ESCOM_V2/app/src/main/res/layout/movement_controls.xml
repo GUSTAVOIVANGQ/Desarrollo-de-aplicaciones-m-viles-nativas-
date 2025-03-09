@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<GridLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:rowCount="3"
+    android:columnCount="3">
+
+    <Space
+        android:layout_width="48dp"
+        android:layout_height="48dp"/>
+
+    <Button
+        android:id="@+id/button_north"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:text="N"/>
+
+    <Space
+        android:layout_width="48dp"
+        android:layout_height="48dp"/>
+
+    <Button
+        android:id="@+id/button_west"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:text="W"/>
+
+    <Space
+        android:layout_width="48dp"
+        android:layout_height="48dp"/>
+
+    <Button
+        android:id="@+id/button_east"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:text="E"/>
+
+    <Space
+        android:layout_width="48dp"
+        android:layout_height="48dp"/>
+
+    <Button
+        android:id="@+id/button_south"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:text="S"/>
+
+    <Space
+        android:layout_width="48dp"
+        android:layout_height="48dp"/>
+
+</GridLayout>

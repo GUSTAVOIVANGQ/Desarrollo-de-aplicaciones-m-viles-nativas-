@@ -29,6 +29,7 @@ class MapMatrixProvider {
         const val MAP_CAFETERIA = "escom_cafeteria"
         const val MAP_BIBLIOTECA = "escom_biblioteca"
         const val MAP_AUDITORIO = "escom_auditorio"
+        const val MAP_HOUSE = "house" // Añadir constante para el mapa de la casa
 
         // Puntos de transición entre mapas
         val MAIN_TO_BUILDING2_POSITION = Pair(15, 10)
@@ -50,6 +51,8 @@ class MapMatrixProvider {
         // Agregar punto de transición para el auditorio
         val MAIN_TO_AUDITORIO_POSITION = Pair(7, 20)
         val AUDITORIO_TO_MAIN_POSITION = Pair(1, 1)
+        val MAIN_TO_HOUSE_POSITION = Pair(10, 0)  // Nueva posición desde el mapa principal
+        val HOUSE_TO_MAIN_POSITION = Pair(1, 38)  // Mantener la posición de regreso
 
         /**
          * Obtiene la matriz para el mapa especificado
@@ -63,6 +66,7 @@ class MapMatrixProvider {
                 MAP_CAFETERIA -> createCafeESCOMMatrix()
                 MAP_BIBLIOTECA -> createBibliotecaMatrix()
                 MAP_AUDITORIO -> createAuditorioMatrix()
+                MAP_HOUSE -> createHouseMatrix() // Añadir el nuevo mapa
                 else -> createDefaultMatrix() // Por defecto, un mapa básico
             }
         }
@@ -81,8 +85,11 @@ class MapMatrixProvider {
                         matrix[i][j] = WALL
                     }
                     // Zonas interactivas (edificios, entradas)
-                    else if (i == 10 && j == 15) {
-                        matrix[i][j] = INTERACTIVE // Entrada al edificio 2
+                    else if ((i == 10 && j == 15) || // Entrada al edificio 2
+                            (i == 7 && j == 20) || // Entrada al auditorio
+                            (i == 2 && j == 7))    // Entrada a la casa
+                    {
+                        matrix[i][j] = INTERACTIVE
                     }
                     // Obstáculos (árboles, bancas, etc)
                     else if (i % 7 == 0 && j % 8 == 0) {
@@ -155,6 +162,11 @@ class MapMatrixProvider {
         🚪Exit                                                                            Exit🚪
         ║                                                                                     ║
         ║ ┌────────────────────┐       ┌──────────────────────────┐       ┌────────────────┐  ║
+        ║ │   [_]   [_]   [_]  │       │   [_]   [_]   [_]   [_]  │       │ [_]   [_]   [_]│  ║
+        ║ │   [_]   [_]   [_]  │       │   [_]   [_]   [_]   [_]  │       │ [_]   [_]   [_]│  ║
+        ║ │   [_]   [_]   [_]  │       │   [_]   [_]   [_]   [_]  │       │ [_]   [_]   [_]│  ║
+        ║ │   [_]   [_]   [_]  │       │   [_]   [_]   [_]   [_]  │       │ [_]   [_]   [_]│  ║
+        ║ │   [_]   [_]   [_]  │       │   [_]   [_]   [_]   [_]  │       │ [_]   [_]   [_]│  ║
         ║ │   [_]   [_]   [_]  │       │   [_]   [_]   [_]   [_]  │       │ [_]   [_]   [_]│  ║
         ║ │   [_]   [_]   [_]  │       │   [_]   [_]   [_]   [_]  │       │ [_]   [_]   [_]│  ║
         ║ │   [_]   [_]   [_]  │       │   [_]   [_]   [_]   [_]  │       │ [_]   [_]   [_]│  ║
@@ -277,7 +289,7 @@ class MapMatrixProvider {
 
                     // Hacer las puertas más anchas para facilitar el acceso
                     if (doorX - 1 >= 0) matrix[roomBottom][doorX - 1] = PATH
-                    if (doorX + 1 < MAP_WIDTH) matrix[roomBottom][doorX + 1] = PATH
+                    if (doorX + 1 < MAP_WIDTH) matrix[doorX + 1][doorX + 1] = PATH
                 }
             }
 
@@ -573,6 +585,119 @@ class MapMatrixProvider {
         private fun createAuditorioMatrix(): Array<Array<Int>> {
             return AuditorioMap.mapaAuditorio
         }
+        /**
+         * Matriz para la casa (exterior)
+         * Basada en el siguiente diseño ASCII:
+        ╔══════════════════════════════════════════════════╗
+        ║ 🏠      🏠     🌳     🏢           🏪     🏠   ║
+        ╠═════╪═══╪═════╪═══╪═════╪═══╪═════╪═══╪═══╪══════╣
+        ║                                                  ║
+        ║=====    =====    =====    =====        =====     ║
+        ║                                                  ║ 
+        ║ 🏠      🏠      🏠      🏠          🏠      🏠  ║
+        ╠═════╪═══╪═════╪═══╪═════╪═══╪═════╪═══╪═══╪══════╣
+        ║                                                  ║ 
+        ║                                                  ║ 
+        ║≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡ ║
+        ║                                                  ║ 
+        ║≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡≡  ║
+        ║                                                  ║ 
+        ║                      🌉                         ║
+        ╠═════╪═══╪═════╪═══╪═════╪═══╪═════╪═══╪═══╪════ ═╣
+        ║ 🏠      🏠      🏠      🏠          🏠      🏠 ║
+        ╠═════╪═══╪═════╪═══╪═════╪═══╪═════╪═══╪═══╪═════ ╣
+        ║ 🚶      🚶      🚶      🚶          🚶      🚶     ║
+        ║                                                  ║ 
+        ╚══════════════════════════════════════════════════╝
+         */
+
+
+        /**
+         * Matriz para el interior de la casa
+         * Basada en el siguiente diseño ASCII:
+         * ╔══════════════════════════════════╗
+         * ║         Entrada Principal        ║
+         * ║              ▓▓▓▓                ║
+         * ║     Jardin   ▓▓▓▓   Garage       ║
+         * ║              ▓▓▓▓                ║
+         * ║     🌳🌳     ▓▓▓▓     🚗        ║
+         * ║              ▓▓▓▓                ║
+         * ╠══════════════════════════════════╣
+         * ║    Sala      Comedor   Cocina    ║
+         * ║                                  ║
+         * ║   [_]  [_]   [__]     🍳 🥘     ║
+         * ║     TV                           ║
+         * ╠═══════════╦════════════════════╗ ║
+         * ║  Baño     ║     Recámara       ║ ║
+         * ║   🚽      ║     [___]          ║ ║
+         * ║           ║        🛏️          ║ ║
+         * ╚═══════════╩════════════════════╝ ║
+         * ╚══════════════════════════════════╝
+         */
+        private fun createHouseMatrix(): Array<Array<Int>> {
+            val matrix = Array(MAP_HEIGHT) { Array(MAP_WIDTH) { PATH } }
+            
+            // Constantes para mejorar legibilidad
+            val PARED = WALL
+            val CAMINO = PATH
+            val MUEBLE = INACCESSIBLE
+            val ENTRADA = INTERACTIVE
+
+            // Bordes exteriores de la casa
+            for (i in 0 until MAP_HEIGHT) {
+                for (j in 0 until MAP_WIDTH) {
+                    if (i == 0 || i == MAP_HEIGHT - 1 || j == 0 || j == MAP_WIDTH - 1) {
+                        matrix[i][j] = PARED
+                    }
+                }
+            }
+
+            // Entrada principal
+            matrix[0][20] = ENTRADA
+            
+            // Jardín (área izquierda superior)
+            for (i in 5..10) {
+                for (j in 5..10) {
+                    matrix[i][j] = PATH // Área verde
+                }
+            }
+
+            // Garage (área derecha superior)
+            for (i in 5..10) {
+                for (j in 25..30) {
+                    matrix[i][j] = PATH // Área para el auto
+                }
+            }
+
+            // División interna (paredes)
+            for (i in 15..25) {
+                matrix[i][15] = PARED // Pared vertical central
+            }
+
+            // Muebles y objetos interactivos
+            // Sala
+            matrix[10][5] = MUEBLE  // Sofá
+            matrix[10][7] = MUEBLE  // Sillón
+            matrix[11][6] = INTERACTIVE // TV
+
+            // Comedor
+            matrix[10][20] = MUEBLE // Mesa
+            matrix[11][20] = MUEBLE // Sillas
+
+            // Cocina
+            matrix[10][30] = INTERACTIVE // Estufa
+            matrix[11][30] = INTERACTIVE // Refrigerador
+
+            // Baño
+            matrix[20][5] = INTERACTIVE // Inodoro
+            matrix[20][7] = INTERACTIVE // Lavabo
+
+            // Recámara
+            matrix[20][25] = MUEBLE // Cama
+            matrix[21][25] = INTERACTIVE // Ropero
+
+            return matrix
+        }
 
         /**
          * Matriz predeterminada para cualquier otro mapa
@@ -661,6 +786,17 @@ class MapMatrixProvider {
                 return MAP_MAIN
             }
 
+            // Transiciones para la casa
+            if (mapId == MAP_MAIN && x == MAIN_TO_HOUSE_POSITION.first && 
+                y == MAIN_TO_HOUSE_POSITION.second) {
+                return MAP_HOUSE
+            }
+            
+            if (mapId == MAP_HOUSE && x == HOUSE_TO_MAIN_POSITION.first && 
+                y == HOUSE_TO_MAIN_POSITION.second) {
+                return MAP_MAIN
+            }
+
             return null
         }
 
@@ -677,6 +813,7 @@ class MapMatrixProvider {
                 MAP_CAFETERIA -> Pair(2, 2)  // Posición central dentro de la escomCAFE
                 MAP_BIBLIOTECA -> Pair(20, 35)  // Posición inicial en la biblioteca
                 MAP_AUDITORIO -> AuditorioMap.getSpawnPoints().firstOrNull() ?: Pair(1, 1)
+                MAP_HOUSE -> Pair(20, 20)  // Posición inicial en la casa
                 else -> Pair(MAP_WIDTH / 2, MAP_HEIGHT / 2)
             }
         }
@@ -715,10 +852,16 @@ class MapMatrix(private val mapId: String) {
     }
 
     fun isValidPosition(x: Int, y: Int): Boolean {
+        if (mapId == MapMatrixProvider.MAP_AUDITORIO) {
+            return x in 0 until MapMatrixProvider.MAP_WIDTH && 
+                   y in 0 until MapMatrixProvider.MAP_HEIGHT
+        }
+        
+        // Para otros mapas, mantener la lógica original
         return x in 0 until MapMatrixProvider.MAP_WIDTH &&
-                y in 0 until MapMatrixProvider.MAP_HEIGHT &&
-                matrix[y][x] != MapMatrixProvider.WALL &&
-                matrix[y][x] != MapMatrixProvider.INACCESSIBLE
+               y in 0 until MapMatrixProvider.MAP_HEIGHT &&
+               matrix[y][x] != MapMatrixProvider.WALL &&
+               matrix[y][x] != MapMatrixProvider.INACCESSIBLE
     }
 
     fun isInteractivePosition(x: Int, y: Int): Boolean {

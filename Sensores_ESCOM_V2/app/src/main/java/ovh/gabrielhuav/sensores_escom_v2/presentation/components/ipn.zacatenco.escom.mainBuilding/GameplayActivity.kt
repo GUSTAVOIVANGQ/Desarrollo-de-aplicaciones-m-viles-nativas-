@@ -18,6 +18,7 @@ import ovh.gabrielhuav.sensores_escom_v2.R
 import ovh.gabrielhuav.sensores_escom_v2.data.map.Bluetooth.BluetoothGameManager
 import ovh.gabrielhuav.sensores_escom_v2.data.map.BluetoothWebSocketBridge
 import ovh.gabrielhuav.sensores_escom_v2.data.map.OnlineServer.OnlineServerManager
+import ovh.gabrielhuav.sensores_escom_v2.presentation.components.ipn.zacatenco.escom.house.House
 import ovh.gabrielhuav.sensores_escom_v2.presentation.components.mapview.*
 
 class GameplayActivity : AppCompatActivity(),
@@ -64,9 +65,30 @@ class GameplayActivity : AppCompatActivity(),
         setContentView(R.layout.activity_gameplay)
 
         try {
-            initializeComponents(savedInstanceState)
+            mapView = MapView(this)
+            findViewById<FrameLayout>(R.id.map_container).addView(mapView)
 
-            // Después de inicializar los componentes, configura el playerManager
+            playerName = intent.getStringExtra("PLAYER_NAME") ?: run {
+                Toast.makeText(this, "Nombre de jugador no encontrado.", Toast.LENGTH_SHORT).show()
+                finish()
+                return
+            }
+
+            if (savedInstanceState == null) {
+                gameState.isServer = intent.getBooleanExtra("IS_SERVER", false)
+                gameState.playerPosition = intent.getSerializableExtra("INITIAL_POSITION") as? Pair<Int, Int>
+                    ?: Pair(1, 1)
+            } else {
+                restoreState(savedInstanceState)
+            }
+
+            // Inicializar vistas y gestores
+            initializeViews()
+            initializeManagers()
+            setupButtonListeners()
+            setupInitialConfiguration()
+
+            // Configurar el playerManager
             mapView.playerManager.apply {
                 setCurrentMap("main")
                 localPlayerId = playerName
@@ -239,6 +261,7 @@ class GameplayActivity : AppCompatActivity(),
                         "edificio2" -> startBuildingActivity()
                         "cafeteria" -> startCafeteriaActivity()
                         "auditorio" -> startAuditorioActivity()
+                        "house" -> startHouseActivity()
                         else -> showToast("No hay interacción disponible en esta posición")
                     }
                 } else {
@@ -285,6 +308,18 @@ class GameplayActivity : AppCompatActivity(),
     finish()
 }
 
+    private fun startHouseActivity() {
+    val intent = Intent(this, House::class.java).apply {
+        putExtra("PLAYER_NAME", playerName)
+        putExtra("IS_SERVER", gameState.isServer)
+        putExtra("INITIAL_POSITION", Pair(1, 1))  // Posición inicial en la casa
+        putExtra("PREVIOUS_POSITION", gameState.playerPosition) // Guarda la posición actual
+        flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+    }
+    startActivity(intent)
+    finish()
+}
+
     private var canChangeMap = false  // Variable para controlar si se puede cambiar de mapa
     private var targetDestination: String? = null  // Variable para almacenar el destino
 
@@ -306,11 +341,18 @@ class GameplayActivity : AppCompatActivity(),
                 }
             }
             position.first == 7 && position.second == 20 -> {
-            canChangeMap = true
-            targetDestination = "auditorio"
-            runOnUiThread {
-                Toast.makeText(this, "Presiona A para entrar al auditorio", Toast.LENGTH_SHORT).show()
-            }
+                canChangeMap = true
+                targetDestination = "auditorio"
+                runOnUiThread {
+                    Toast.makeText(this, "Presiona A para entrar al auditorio", Toast.LENGTH_SHORT).show()
+                }
+        }
+            position.first == 2 && position.second == 7 -> {
+                canChangeMap = true
+                targetDestination = "house"
+                runOnUiThread {
+                    Toast.makeText(this, "Presiona A para entrar a la casa", Toast.LENGTH_SHORT).show()
+                }
         }
             else -> {
                 canChangeMap = false

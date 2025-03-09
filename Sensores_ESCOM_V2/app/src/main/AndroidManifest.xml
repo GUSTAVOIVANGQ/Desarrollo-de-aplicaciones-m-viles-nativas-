@@ -79,6 +79,17 @@
         <activity
             android:name=".presentation.components.Auditorio"
             android:configChanges="orientation|screenSize|keyboardHidden"/>
+
+        <!-- Agregar la nueva Activity de la Casa -->
+        <activity
+            android:name=".presentation.components.ipn.zacatenco.escom.house.House"
+            android:screenOrientation="portrait"
+            android:exported="false" />
+
+        <activity
+            android:name=".presentation.components.ipn.zacatenco.escom.house.InsideHouse"
+            android:screenOrientation="portrait"
+            android:exported="false" />
     </application>
 
 </manifest>

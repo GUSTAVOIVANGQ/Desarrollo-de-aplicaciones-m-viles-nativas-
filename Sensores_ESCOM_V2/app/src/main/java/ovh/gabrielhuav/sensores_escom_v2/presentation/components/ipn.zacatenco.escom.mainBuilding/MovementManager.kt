@@ -49,6 +49,7 @@ class MovementManager(
         val newX = (localPlayerPosition.first + deltaX).coerceIn(0, MapMatrixProvider.MAP_WIDTH - 1)
         val newY = (localPlayerPosition.second + deltaY).coerceIn(0, MapMatrixProvider.MAP_HEIGHT - 1)
 
+        // Siempre permitir el movimiento si la posición está dentro de los límites
         if (mapView.isValidPosition(newX, newY)) {
             localPlayerPosition = Pair(newX, newY)
             mapView.updateLocalPlayerPosition(localPlayerPosition)
