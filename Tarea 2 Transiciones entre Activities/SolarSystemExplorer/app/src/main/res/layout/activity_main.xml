@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/linearLayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/galaxy_background">
+
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="111dp"
+        android:layout_marginTop="40dp"
+        android:layout_marginEnd="112dp"
+        android:fontFamily="sans-serif-black"
+        android:gravity="center"
+        android:text="Explora la Galaxia"
+        android:textAppearance="@style/ShapeAppearance.Material3.Corner.Large"
+        android:textColor="@android:color/white"
+        android:textColorHighlight="#3F51B5"
+        android:textColorHint="#000000"
+        android:textCursorDrawable="@drawable/mars"
+        android:textSize="24sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/btnViaLactea"
+        android:layout_width="134dp"
+        android:layout_height="99dp"
+        android:layout_marginStart="136dp"
+        android:layout_marginBottom="316dp"
+        android:padding="20dp"
+        android:text="Vía Láctea"
+        android:textSize="18sp"
+        android:background="@android:color/transparent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
