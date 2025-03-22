@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Adjusted margins for landscape orientation -->
+    <dimen name="margin_small">6dp</dimen>
+    <dimen name="margin_medium">12dp</dimen>
+    <dimen name="margin_large">18dp</dimen>
+    <dimen name="margin_xlarge">24dp</dimen>
+    
+    <!-- Specific UI elements for landscape -->
+    <dimen name="button_height">48dp</dimen>
+</resources>

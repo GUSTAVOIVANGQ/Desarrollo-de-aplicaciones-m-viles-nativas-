@@ -1,0 +1,37 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Base.Theme.Exam1" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Customize your dark theme here. -->
+        <!-- <item name="colorPrimary">@color/my_dark_primary</item> -->
+    </style>
+
+    <!-- IPN Guinda Theme (Dark Mode) -->
+    <style name="Theme.Exam1.Guinda" parent="Theme.Material3.Dark.NoActionBar">
+        <item name="colorPrimary">@color/guinda_primary</item>
+        <item name="colorPrimaryVariant">@color/guinda_secondary</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorSecondary">@color/guinda_accent</item>
+        <item name="colorSecondaryVariant">@color/guinda_secondary</item>
+        <item name="colorOnSecondary">@color/white</item>
+        <item name="android:colorBackground">#121212</item>
+        <item name="colorSurface">#1E1E1E</item>
+        <item name="colorOnSurface">#E1E1E1</item>
+        <item name="colorOnBackground">#E1E1E1</item>
+        <item name="android:statusBarColor">@color/black</item>
+    </style>
+    
+    <!-- ESCOM Blue Theme (Dark Mode) -->
+    <style name="Theme.Exam1.Escom" parent="Theme.Material3.Dark.NoActionBar">
+        <item name="colorPrimary">@color/escom_primary</item>
+        <item name="colorPrimaryVariant">@color/escom_secondary</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorSecondary">@color/escom_accent</item>
+        <item name="colorSecondaryVariant">@color/escom_secondary</item>
+        <item name="colorOnSecondary">@color/white</item>
+        <item name="android:colorBackground">#121212</item>
+        <item name="colorSurface">#1E1E1E</item>
+        <item name="colorOnSurface">#E1E1E1</item>
+        <item name="colorOnBackground">#E1E1E1</item>
+        <item name="android:statusBarColor">@color/black</item>
+    </style>
+</resources>

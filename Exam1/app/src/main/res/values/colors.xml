@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    
+    <!-- IPN Guinda Theme Colors -->
+    <color name="guinda_primary">#8F1838</color>
+    <color name="guinda_secondary">#B52146</color>
+    <color name="guinda_background">#FFF5F7</color>
+    <color name="guinda_surface">#FFFFFF</color>
+    <color name="guinda_text">#1F1F1F</color>
+    <color name="guinda_accent">#CF3162</color>
+
+    <!-- ESCOM Blue Theme Colors -->
+    <color name="escom_primary">#003A70</color>
+    <color name="escom_secondary">#0052A5</color>
+    <color name="escom_background">#F5F9FF</color>
+    <color name="escom_surface">#FFFFFF</color>
+    <color name="escom_text">#1F1F1F</color>
+    <color name="escom_accent">#0078D4</color>
+</resources>

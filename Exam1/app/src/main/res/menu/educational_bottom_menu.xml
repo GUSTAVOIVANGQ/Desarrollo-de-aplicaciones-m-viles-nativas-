@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/nav_introduction"
+        android:icon="@android:drawable/ic_dialog_info"
+        android:title="Introducción" />
+    <item
+        android:id="@+id/nav_binary_basics"
+        android:icon="@android:drawable/ic_menu_sort_by_size"
+        android:title="Conceptos" />
+    <item
+        android:id="@+id/nav_conversion"
+        android:icon="@android:drawable/ic_menu_rotate"
+        android:title="Conversiones" />
+    <item
+        android:id="@+id/nav_visualization"
+        android:icon="@android:drawable/ic_menu_view"
+        android:title="Visualización" />
+</menu>

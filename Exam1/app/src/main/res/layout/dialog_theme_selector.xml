@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Seleccionar Tema"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="16dp"/>
+
+    <RadioGroup
+        android:id="@+id/themeRadioGroup"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <RadioButton
+            android:id="@+id/radioGuinda"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Tema Guinda (IPN)"
+            android:padding="12dp"/>
+
+        <RadioButton
+            android:id="@+id/radioEscom"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Tema Azul (ESCOM)"
+            android:padding="12dp"/>
+    </RadioGroup>
+
+</LinearLayout>

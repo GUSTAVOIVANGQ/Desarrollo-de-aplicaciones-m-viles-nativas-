@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/nav_switches"
+        android:icon="@android:drawable/button_onoff_indicator_on"
+        android:title="Interruptores" />
+    <item
+        android:id="@+id/nav_practice"
+        android:icon="@android:drawable/ic_menu_edit"
+        android:title="Práctica" />
+    <item
+        android:id="@+id/nav_challenges"
+        android:icon="@android:drawable/ic_menu_myplaces"
+        android:title="Desafíos" />
+</menu>
