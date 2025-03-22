@@ -1,3 +1,5 @@
+# Examen 1: Sistema Binario
+
 # Documento de Decisiones de Diseño e Implementación
 
 ## Introducción
