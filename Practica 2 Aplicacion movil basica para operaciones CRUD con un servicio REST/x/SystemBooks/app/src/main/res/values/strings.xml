@@ -1,0 +1,64 @@
+<resources>
+    <string name="app_name">SystemBooks</string>
+    <string name="login">Login</string>
+    <string name="register">Register</string>
+    <string name="crud_operations">CRUD Operations</string>
+    <string name="profile">Profile</string>
+    <string name="logout">Logout</string>
+    <string name="nav_header_desc">Navigation header</string>
+    <string name="not_logged_in">Not logged in</string>
+    <string name="guest">Guest</string>
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="user_list">List of users</string>
+    <!-- Login y Registro -->
+    <string name="login_title">Iniciar Sesión</string>
+    <string name="register_title">Registrarse</string>
+    <string name="email">Correo electrónico</string>
+    <string name="password">Contraseña</string>
+    <string name="confirm_password">Confirmar contraseña</string>
+    <string name="name">Nombre</string>
+    <string name="register_link">¿No tienes cuenta? Regístrate aquí</string>
+    <string name="login_link">¿Ya tienes cuenta? Inicia sesión aquí</string>
+    <string name="error_login">Error al iniciar sesión</string>
+    <string name="error_register">Error al registrarse</string>
+    <string name="success_login">Inicio de sesión exitoso</string>
+    <string name="success_register">Registro exitoso</string>
+    <string name="error_empty_fields">Todos los campos son obligatorios</string>
+    <string name="error_passwords_not_match">Las contraseñas no coinciden</string>
+    <string name="error_invalid_email">Correo electrónico inválido</string>
+    
+    <!-- Perfil y Gestión de Usuarios -->
+    <string name="profile_title">Mi Perfil</string>
+    <string name="change_photo">Cambiar Foto</string>
+    <string name="save_profile">Guardar Perfil</string>
+    <string name="user_management">Gestión de Usuarios</string>
+    <string name="add_user">Agregar Usuario</string>
+    <string name="edit_user">Editar Usuario</string>
+    <string name="delete_user">Eliminar Usuario</string>
+    <string name="delete_confirmation">¿Estás seguro de que deseas eliminar este usuario?</string>
+    <string name="yes">Sí</string>
+    <string name="no">No</string>
+    <string name="success_profile_update">Perfil actualizado con éxito</string>
+    <string name="error_profile_update">Error al actualizar el perfil</string>
+    <string name="success_photo_update">Foto actualizada con éxito</string>
+    <string name="error_photo_update">Error al actualizar la foto</string>
+    <string name="choose_photo_source">Seleccionar fuente de imagen</string>
+    <string name="camera">Cámara</string>
+    <string name="gallery">Galería</string>
+    <string name="cancel">Cancelar</string>
+    <string name="no_users_found">No se encontraron usuarios</string>
+    <string name="user_deleted">Usuario eliminado con éxito</string>
+    <string name="error_deleting_user">Error al eliminar el usuario</string>
+    
+    <!-- Roles y Acceso -->
+    <string name="access_denied">Acceso Denegado</string>
+    <string name="access_denied_description">No tienes permisos para acceder a esta función. Por favor, contacta al administrador si crees que deberías tener acceso.</string>
+    <string name="access_denied_message">No tienes permiso para acceder a esta sección</string>
+    <string name="admin_role_name">Administrador</string>
+    <string name="user_role_name">Usuario</string>
+    <string name="default_username">Usuario</string>
+    <string name="go_back">Volver</string>
+    <string name="admin_welcome">¡Bienvenido administrador!</string>
+    <string name="logout_success">Sesión cerrada correctamente</string>
+</resources>
