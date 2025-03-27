@@ -6,8 +6,8 @@ public class RoleManager {
     
     // Constantes para los diferentes roles
     public static final String ROLE_GUEST = "guest";
-    public static final String ROLE_USER = "user";
-    public static final String ROLE_ADMIN = "admin";
+    public static final String ROLE_USER = "ROLE_USER";
+    public static final String ROLE_ADMIN = "ROLE_ADMIN";
     
     private SessionManager sessionManager;
     

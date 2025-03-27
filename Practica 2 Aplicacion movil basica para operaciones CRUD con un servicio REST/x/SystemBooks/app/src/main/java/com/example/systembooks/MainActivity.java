@@ -143,7 +143,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     
     /**
      * Updates the navigation menu based on user role
-     * @param role The role of the user ("guest", "admin", or "user")
+     * @param role The role of the user ("guest", "ROLE_ADMIN", or "ROLE_USER")
      */
     public void showMenuItemsByRole(String role) {
         NavigationView navigationView = findViewById(R.id.nav_view);

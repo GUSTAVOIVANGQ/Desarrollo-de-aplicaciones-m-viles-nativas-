@@ -83,6 +83,7 @@ public class LoginFragment extends Fragment {
                 if (getActivity() != null) {
                     MainActivity mainActivity = (MainActivity) getActivity();
                     String role = result.getRole();
+                    Log.d(TAG, "Login successful with role: " + role);
                     mainActivity.showMenuItemsByRole(role);
                     
                     // Navegar al fragmento adecuado según el rol
@@ -90,8 +91,12 @@ public class LoginFragment extends Fragment {
                     if (role.equals(RoleManager.ROLE_ADMIN)) {
                         fragmentToLoad = new UserManagementFragment();
                         Toast.makeText(getContext(), R.string.admin_welcome, Toast.LENGTH_SHORT).show();
-                    } else {
+                    } else if (role.equals(RoleManager.ROLE_USER)) {
                         fragmentToLoad = new ProfileFragment();
+                    } else {
+                        // If we get an unexpected role, default to profile view
+                        fragmentToLoad = new ProfileFragment();
+                        Log.w(TAG, "Unexpected role received: " + role);
                     }
                     
                     mainActivity.getSupportFragmentManager().beginTransaction()
