@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Common Colors -->
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    
+    <!-- IPN (Guinda) Theme Colors - Light Mode -->
+    <color name="ipn_primary">#831230</color>
+    <color name="ipn_primary_variant">#A71930</color>
+    <color name="ipn_secondary">#CD5C5C</color>
+    <color name="ipn_background">#FFFFFF</color>
+    <color name="ipn_surface">#F5F5F5</color>
+    <color name="ipn_error">#B00020</color>
+    <color name="ipn_on_primary">#FFFFFF</color>
+    <color name="ipn_on_secondary">#FFFFFF</color>
+    <color name="ipn_on_background">#000000</color>
+    <color name="ipn_on_surface">#000000</color>
+    <color name="ipn_on_error">#FFFFFF</color>
+    
+    <!-- ESCOM (Azul) Theme Colors - Light Mode -->
+    <color name="escom_primary">#003057</color>
+    <color name="escom_primary_variant">#005288</color>
+    <color name="escom_secondary">#4285F4</color>
+    <color name="escom_background">#FFFFFF</color>
+    <color name="escom_surface">#F5F5F5</color>
+    <color name="escom_error">#B00020</color>
+    <color name="escom_on_primary">#FFFFFF</color>
+    <color name="escom_on_secondary">#FFFFFF</color>
+    <color name="escom_on_background">#000000</color>
+    <color name="escom_on_surface">#000000</color>
+    <color name="escom_on_error">#FFFFFF</color>
+</resources>

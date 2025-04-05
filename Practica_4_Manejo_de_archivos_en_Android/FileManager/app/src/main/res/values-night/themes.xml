@@ -1,0 +1,39 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Base.Theme.FileManager" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Customize your dark theme here. -->
+        <!-- <item name="colorPrimary">@color/my_dark_primary</item> -->
+    </style>
+    
+    <!-- IPN (Guinda) Dark Theme -->
+    <style name="Theme.FileManager.IPN" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/ipn_primary</item>
+        <item name="colorPrimaryVariant">@color/ipn_primary_variant</item>
+        <item name="colorSecondary">@color/ipn_secondary</item>
+        <item name="android:colorBackground">@color/ipn_background</item>
+        <item name="colorSurface">@color/ipn_surface</item>
+        <item name="colorError">@color/ipn_error</item>
+        <item name="colorOnPrimary">@color/ipn_on_primary</item>
+        <item name="colorOnSecondary">@color/ipn_on_secondary</item>
+        <item name="colorOnBackground">@color/ipn_on_background</item>
+        <item name="colorOnSurface">@color/ipn_on_surface</item>
+        <item name="android:statusBarColor">@color/black</item>
+        <item name="android:navigationBarColor">@color/black</item>
+    </style>
+    
+    <!-- ESCOM (Azul) Dark Theme -->
+    <style name="Theme.FileManager.ESCOM" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/escom_primary</item>
+        <item name="colorPrimaryVariant">@color/escom_primary_variant</item>
+        <item name="colorSecondary">@color/escom_secondary</item>
+        <item name="android:colorBackground">@color/escom_background</item>
+        <item name="colorSurface">@color/escom_surface</item>
+        <item name="colorError">@color/escom_error</item>
+        <item name="colorOnPrimary">@color/escom_on_primary</item>
+        <item name="colorOnSecondary">@color/escom_on_secondary</item>
+        <item name="colorOnBackground">@color/escom_on_background</item>
+        <item name="colorOnSurface">@color/escom_on_surface</item>
+        <item name="android:statusBarColor">@color/black</item>
+        <item name="android:navigationBarColor">@color/black</item>
+    </style>
+</resources>

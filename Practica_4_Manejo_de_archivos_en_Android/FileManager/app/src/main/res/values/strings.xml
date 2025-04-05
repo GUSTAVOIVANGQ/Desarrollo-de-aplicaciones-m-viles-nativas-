@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">File Manager</string>
+    
+    <!-- Theme selection -->
+    <string name="theme_selection">Theme Selection</string>
+    <string name="theme_ipn">Theme Guinda (IPN)</string>
+    <string name="theme_escom">Theme Azul (ESCOM)</string>
+    <string name="theme_changed">Theme changed</string>
+</resources>
