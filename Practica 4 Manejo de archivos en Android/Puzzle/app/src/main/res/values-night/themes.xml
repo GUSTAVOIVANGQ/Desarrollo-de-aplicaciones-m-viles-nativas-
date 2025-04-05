@@ -1,0 +1,50 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base dark application theme. -->
+    <style name="Base.Theme.Puzzle" parent="Theme.Material3.DayNight">
+        <!-- ActionBar style -->
+        <item name="actionBarStyle">@style/Widget.Puzzle.ActionBar</item>
+        <item name="actionBarTheme">@style/ThemeOverlay.Puzzle.ActionBar</item>
+        <!-- Controls etc -->
+        <item name="android:windowBackground">@color/black</item>
+        <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
+    </style>
+
+    <!-- IPN Guinda Theme (Dark) -->
+    <style name="Theme.Puzzle.Guinda" parent="Base.Theme.Puzzle">
+        <!-- Color attributes -->
+        <item name="colorPrimary">@color/ipn_primary</item>
+        <item name="colorPrimaryVariant">@color/ipn_primary_variant</item>
+        <item name="colorSecondary">@color/ipn_secondary</item>
+        <item name="colorSurface">@color/ipn_surface</item>
+        <item name="android:windowBackground">@color/ipn_background</item>
+        <item name="colorError">@color/ipn_error</item>
+        <item name="colorOnPrimary">@color/ipn_on_primary</item>
+        <item name="colorOnSecondary">@color/ipn_on_secondary</item>
+        <item name="colorOnBackground">@color/ipn_on_background</item>
+        <item name="colorOnSurface">@color/ipn_on_surface</item>
+        <item name="colorOnError">@color/ipn_on_error</item>
+        <item name="puzzleTileColor">@color/ipn_tile</item>
+        <item name="puzzleTileCorrectColor">@color/ipn_tile_correct</item>
+    </style>
+
+    <!-- ESCOM Azul Theme (Dark) -->
+    <style name="Theme.Puzzle.Azul" parent="Base.Theme.Puzzle">
+        <!-- Color attributes -->
+        <item name="colorPrimary">@color/escom_primary</item>
+        <item name="colorPrimaryVariant">@color/escom_primary_variant</item>
+        <item name="colorSecondary">@color/escom_secondary</item>
+        <item name="colorSurface">@color/escom_surface</item>
+        <item name="android:windowBackground">@color/escom_background</item>
+        <item name="colorError">@color/escom_error</item>
+        <item name="colorOnPrimary">@color/escom_on_primary</item>
+        <item name="colorOnSecondary">@color/escom_on_secondary</item>
+        <item name="colorOnBackground">@color/escom_on_background</item>
+        <item name="colorOnSurface">@color/escom_on_surface</item>
+        <item name="colorOnError">@color/escom_on_error</item>
+        <item name="puzzleTileColor">@color/escom_tile</item>
+        <item name="puzzleTileCorrectColor">@color/escom_tile_correct</item>
+    </style>
+
+    <!-- Default theme is Azul -->
+    <style name="Theme.Puzzle" parent="Theme.Puzzle.Azul" />
+</resources>

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- IPN (Guinda) Theme Colors - Dark Mode -->
+    <color name="ipn_primary">#A71930</color>
+    <color name="ipn_primary_variant">#C42847</color>
+    <color name="ipn_secondary">#FF8A80</color>
+    <color name="ipn_background">#121212</color>
+    <color name="ipn_surface">#1E1E1E</color>
+    <color name="ipn_on_primary">#FFFFFF</color>
+    <color name="ipn_on_secondary">#000000</color>
+    <color name="ipn_on_background">#FFFFFF</color>
+    <color name="ipn_on_surface">#FFFFFF</color>
+    
+    <!-- ESCOM (Azul) Theme Colors - Dark Mode -->
+    <color name="escom_primary">#1565C0</color>
+    <color name="escom_primary_variant">#0D47A1</color>
+    <color name="escom_secondary">#82B1FF</color>
+    <color name="escom_background">#121212</color>
+    <color name="escom_surface">#1E1E1E</color>
+    <color name="escom_on_primary">#FFFFFF</color>
+    <color name="escom_on_secondary">#000000</color>
+    <color name="escom_on_background">#FFFFFF</color>
+    <color name="escom_on_surface">#FFFFFF</color>
+
+    <!-- Add these definitions to app/src/main/res/values-night/colors.xml -->
+    <color name="ipn_error">#CF6679</color>
+    <color name="ipn_on_error">#000000</color>
+    <color name="escom_error">#CF6679</color>
+    <color name="escom_on_error">#000000</color>
+</resources>

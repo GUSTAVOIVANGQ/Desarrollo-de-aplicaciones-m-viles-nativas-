@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    
+    <item
+        android:id="@+id/action_new_game"
+        android:title="@string/menu_new_game"
+        app:showAsAction="never"/>
+    
+    <item
+        android:id="@+id/action_difficulty"
+        android:title="@string/menu_change_difficulty"
+        app:showAsAction="never"/>
+    
+    <item
+        android:id="@+id/action_save_game"
+        android:title="@string/menu_save_game"
+        app:showAsAction="never"/>
+    
+    <item
+        android:id="@+id/action_load_game"
+        android:title="@string/menu_load_game"
+        app:showAsAction="never"/>
+    
+    <item
+        android:id="@+id/action_saved_games"
+        android:title="@string/menu_manage_saves"
+        app:showAsAction="never"/>
+    
+    <item
+        android:id="@+id/action_settings"
+        android:title="@string/menu_settings"
+        app:showAsAction="never">
+        <menu>
+            <item
+                android:id="@+id/action_theme"
+                android:title="@string/menu_theme" />
+                
+            <item
+                android:id="@+id/action_save_format"
+                android:title="@string/menu_save_format" />
+        </menu>
+    </item>
+</menu>

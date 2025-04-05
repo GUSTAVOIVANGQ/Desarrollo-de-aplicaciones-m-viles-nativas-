@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/action_search"
+        android:icon="@android:drawable/ic_menu_search"
+        android:title="Search"
+        app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/action_paste"
+        android:icon="@android:drawable/ic_menu_edit"
+        android:title="Paste"
+        android:visible="false"
+        app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/action_new_folder"
+        android:icon="@android:drawable/ic_menu_add"
+        android:title="New Folder"
+        app:showAsAction="ifRoom" />
+    <item
+        android:id="@+id/action_sort"
+        android:icon="@android:drawable/ic_menu_sort_by_size"
+        android:title="Sort"
+        app:showAsAction="ifRoom">
+        <menu>
+            <group android:checkableBehavior="single">
+                <item
+                    android:id="@+id/sort_by_name"
+                    android:checked="true"
+                    android:title="By Name" />
+                <item
+                    android:id="@+id/sort_by_date"
+                    android:title="By Date" />
+                <item
+                    android:id="@+id/sort_by_size"
+                    android:title="By Size" />
+                <item
+                    android:id="@+id/sort_by_type"
+                    android:title="By Type" />
+            </group>
+        </menu>
+    </item>
+    <item
+        android:id="@+id/action_theme"
+        android:icon="@android:drawable/ic_menu_preferences"
+        android:title="@string/theme_selection">
+        <menu>
+            <group android:checkableBehavior="single">
+                <item
+                    android:id="@+id/theme_ipn"
+                    android:title="@string/theme_ipn" />
+                <item
+                    android:id="@+id/theme_escom"
+                    android:title="@string/theme_escom" />
+            </group>
+        </menu>
+    </item>
+</menu>
