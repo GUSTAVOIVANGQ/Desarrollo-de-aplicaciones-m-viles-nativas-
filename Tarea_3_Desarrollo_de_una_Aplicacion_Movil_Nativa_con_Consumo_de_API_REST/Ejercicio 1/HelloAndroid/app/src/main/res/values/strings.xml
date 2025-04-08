@@ -1,0 +1,22 @@
+<resources>
+    <string name="app_name">HelloAndroid</string>
+    <string name="refresh">Actualizar</string>
+    <string name="error_network">Error de conexión. Verifica tu conexión a Internet.</string>
+    <string name="error_server">Error del servidor. Inténtalo más tarde.</string>
+    <string name="error_unknown">Error desconocido. Inténtalo más tarde.</string>
+    <string name="timestamp_format">Recibido: %1$s</string>
+    <string name="loading">Cargando...</string>
+    
+    <!-- Server config strings -->
+    <string name="server_url">URL del servidor:</string>
+    <string name="server_url_hint">http://IP:Puerto/</string>
+    <string name="predefined_servers">Servidores predefinidos:</string>
+    <string name="config_server">Configurar servidor</string>
+    <string name="save">Guardar</string>
+    <string name="cancel">Cancelar</string>
+    <string name="device_info">Información del dispositivo</string>
+    <string name="enter_ip_manually">Ingresar IP manualmente</string>
+    <string name="copy_info">Copiar información</string>
+    <string name="copied_to_clipboard">Información copiada al portapapeles</string>
+    <string name="server_url_updated">URL del servidor actualizada a: %1$s</string>
+</resources>
