@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mi Ubicación en OpenStreetMap</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+          crossorigin=""/>
+    
+    <!-- Leaflet JavaScript -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+            crossorigin=""></script>
+    
+    <style>
+        body {
+            padding: 0;
+            margin: 0;
+            overscroll-behavior: none; /* Prevent pull-to-refresh */
+        }
+        html, body, #map {
+            height: 100%;
+            width: 100%;
+            overflow: hidden; /* Prevent scrolling */
+        }
+        .location-info {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            z-index: 1000;
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            box-shadow: 0 0 5px rgba(0,0,0,0.3);
+        }
+        .loading-indicator {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            font-family: Arial, sans-serif;
+            box-shadow: 0 0 10px rgba(0,0,0,0.3);
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+    <div id="location-info" class="location-info" style="display: none;">
+        Precisión: <span id="accuracy">N/A</span> metros
+    </div>
+    <div id="loading" class="loading-indicator">
+        Cargando mapa...
+    </div>
+    
+    <script>
+        // Global variables
+        let map;
+        let marker;
+        let accuracyCircle;
+        let isFirstLoad = true;
+        let tileLayer;
+        
+        // Remove the loading indicator once the map is initialized
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                const loadingIndicator = document.getElementById('loading');
+                if (loadingIndicator) {
+                    loadingIndicator.style.display = 'none';
+                }
+            }, 2000);
+        });
+        
+        // Initialize the map with default view
+        function initMap() {
+            // Create map with optimal performance settings
+            map = L.map('map', {
+                zoomControl: true,
+                attributionControl: true,
+                // Set default zoom levels
+                minZoom: 3,
+                maxZoom: 19,
+                // Disable continuous world for performance
+                continuousWorld: false,
+                // Enable high frame rate mode for smoother interactions
+                preferCanvas: true,
+                // Limit max bounds to improve performance
+                maxBounds: [[-90, -180], [90, 180]],
+                // Prevent unwanted dragging outside bounds
+                maxBoundsViscosity: 1.0,
+                // Use GPU acceleration
+                renderer: L.canvas({ padding: 0.5 }),
+                // Prevent unnecessary redraws
+                fadeAnimation: true,
+                // Improve pan/zoom performance
+                inertia: true,
+                inertiaDeceleration: 3000,
+                // Increase smoothness
+                smoothFactor: 1.5,
+                // Improve zoom
+                zoomAnimation: true,
+                zoomAnimationThreshold: 4
+            }).setView([0, 0], 2);
+            
+            // Add tile layer with performance optimizations
+            tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                // Set default tile size for better performance
+                tileSize: 256,
+                // Cache tiles for better offline performance
+                useCache: true,
+                // Cross-origin issues fix
+                crossOrigin: true,
+                // Improve image quality control
+                detectRetina: true,
+                // Don't load offscreen tiles immediately
+                updateWhenIdle: true,
+                // Prevent loading unnecessary tiles while zooming
+                updateWhenZooming: false,
+                // Reduce tile loading during movement
+                throttleDeceleration: 300
+            }).addTo(map);
+            
+            // Add zoom control with custom position
+            L.control.zoom({
+                position: 'bottomright'
+            }).addTo(map);
+            
+            // Add scale control
+            L.control.scale({
+                position: 'bottomleft',
+                imperial: false,
+                metric: true
+            }).addTo(map);
+            
+            // Show the location info box
+            document.getElementById('location-info').style.display = 'block';
+        }
+        
+        // Initialize the map on page load
+        initMap();
+        
+        // This function will be called from Android with the user's location
+        function showMap(latitude, longitude, accuracy) {
+            if (!map) {
+                initMap();
+            }
+            
+            // Update the accuracy display
+            document.getElementById('accuracy').textContent = accuracy.toFixed(1);
+            
+            // If this is the first time showing location, set optimal zoom
+            const zoomLevel = isFirstLoad ? calculateOptimalZoom(accuracy) : map.getZoom();
+            
+            // Create a position object
+            const position = {
+                lat: latitude,
+                lng: longitude
+            };
+            
+            // Create or update the user marker
+            if (!marker) {
+                // Create a custom marker with blue dot
+                marker = L.circleMarker(position, {
+                    radius: 8,
+                    fillColor: "#0078D7",
+                    color: "#FFF",
+                    weight: 2,
+                    opacity: 1,
+                    fillOpacity: 0.8
+                }).addTo(map);
+                
+                marker.bindPopup("Mi ubicación").openPopup();
+            } else {
+                // Update existing marker position with smooth animation
+                marker.setLatLng(position);
+            }
+            
+            // Create or update accuracy circle
+            if (!accuracyCircle) {
+                accuracyCircle = L.circle(position, {
+                    radius: accuracy,
+                    fillColor: "#0078D7",
+                    fillOpacity: 0.15,
+                    color: "#0078D7",
+                    weight: 1
+                }).addTo(map);
+            } else {
+                // Update existing circle position and radius
+                accuracyCircle.setLatLng(position);
+                accuracyCircle.setRadius(accuracy);
+            }
+            
+            // Only animate/pan if this is the first load or if the marker is outside the visible area
+            if (isFirstLoad || !map.getBounds().contains(position)) {
+                // Smoothly pan to the new position
+                map.flyTo(position, zoomLevel, {
+                    animate: true,
+                    duration: 1.5
+                });
+                isFirstLoad = false;
+            }
+        }
+        
+        // Calculate optimal zoom level based on accuracy
+        function calculateOptimalZoom(accuracy) {
+            if (accuracy <= 10) return 19;     // Very high accuracy
+            if (accuracy <= 50) return 18;     // High accuracy
+            if (accuracy <= 100) return 17;    // Good accuracy
+            if (accuracy <= 500) return 16;    // Medium accuracy
+            if (accuracy <= 1000) return 15;   // Low accuracy
+            if (accuracy <= 5000) return 13;   // Very low accuracy
+            return 11;                         // Extremely low accuracy
+        }
+        
+        // Show an error message if location can't be obtained
+        function showError(message) {
+            if (!map) {
+                initMap();
+            }
+            
+            // Create an error message container
+            const errorEl = document.createElement('div');
+            errorEl.style.position = 'absolute';
+            errorEl.style.top = '50%';
+            errorEl.style.left = '50%';
+            errorEl.style.transform = 'translate(-50%, -50%)';
+            errorEl.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
+            errorEl.style.padding = '20px';
+            errorEl.style.borderRadius = '10px';
+            errorEl.style.boxShadow = '0 0 10px rgba(0, 0, 0, 0.3)';
+            errorEl.style.textAlign = 'center';
+            errorEl.style.fontFamily = 'Arial, sans-serif';
+            errorEl.style.zIndex = '1000';
+            errorEl.innerHTML = `<h3>${message}</h3>`;
+            
+            // Clear existing error messages
+            const existingErrors = document.querySelectorAll('.error-message');
+            existingErrors.forEach(el => el.remove());
+            
+            // Add class for easy identification
+            errorEl.classList.add('error-message');
+            
+            // Add the error message to the document
+            document.body.appendChild(errorEl);
+            
+            // Hide after 5 seconds
+            setTimeout(() => {
+                errorEl.style.opacity = '0';
+                errorEl.style.transition = 'opacity 1s';
+                
+                // Remove from DOM after fade out
+                setTimeout(() => {
+                    errorEl.remove();
+                }, 1000);
+            }, 5000);
+        }
+        
+        // Handle page visibility changes to conserve resources
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                // Page is hidden, reduce map updates
+                if (tileLayer) {
+                    tileLayer.options.updateWhenIdle = true;
+                }
+            } else {
+                // Page is visible, resume normal updates
+                if (tileLayer) {
+                    tileLayer.options.updateWhenIdle = false;
+                }
+            }
+        });
+        
+        // Clean up resources to prevent memory leaks
+        window.addEventListener('beforeunload', function() {
+            if (map) {
+                map.remove();
+                map = null;
+                marker = null;
+                accuracyCircle = null;
+            }
+        });
+    </script>
+</body>
+</html>
