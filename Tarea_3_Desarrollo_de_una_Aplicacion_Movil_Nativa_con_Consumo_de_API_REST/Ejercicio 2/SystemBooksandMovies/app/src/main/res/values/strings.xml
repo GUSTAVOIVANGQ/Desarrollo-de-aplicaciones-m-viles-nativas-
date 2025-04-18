@@ -1,0 +1,37 @@
+<resources>
+    <string name="app_name">System Books and Movies</string>
+    
+    <!-- Navigation -->
+    <string name="home">Inicio</string>
+    <string name="search">Búsqueda</string>
+    <string name="categories">Categorías</string>
+    
+    <!-- Home Fragment -->
+    <string name="featured_books">Libros destacados</string>
+    
+    <!-- Search Fragment -->
+    <string name="search_hint">Buscar libros por título, autor…</string>
+    <string name="no_results">No se encontraron resultados</string>
+    
+    <!-- Categories Fragment -->
+    <string name="categories_description">Explora libros por categoría</string>
+    <string name="category_arrow">Ver categoría</string>
+    
+    <!-- Book Details -->
+    <string name="book_cover">Portada del libro</string>
+    <string name="book_details">Detalles</string>
+    <string name="publisher">Editorial:</string>
+    <string name="publish_year">Año de publicación:</string>
+    <string name="pages">Páginas:</string>
+    <string name="description">Descripción</string>
+    
+    <!-- Loading -->
+    <string name="loading">Cargando...</string>
+    
+    <!-- Error messages -->
+    <string name="error_icon">Icono de error</string>
+    <string name="error_generic">Algo salió mal. Por favor, inténtelo de nuevo.</string>
+    <string name="error_network">Sin conexión a internet. Por favor, compruebe su conexión.</string>
+    <string name="error_server">Error del servidor. Por favor, inténtelo de nuevo más tarde.</string>
+    <string name="retry">Reintentar</string>
+</resources>

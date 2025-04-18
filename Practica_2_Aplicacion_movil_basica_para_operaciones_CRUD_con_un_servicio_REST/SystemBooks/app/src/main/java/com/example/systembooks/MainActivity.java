@@ -1,5 +1,6 @@
 package com.example.systembooks;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.MenuItem;
 import android.widget.TextView;
@@ -106,6 +107,13 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 fragment = new AccessDeniedFragment();
                 Toast.makeText(this, R.string.access_denied_message, Toast.LENGTH_SHORT).show();
             }
+        } else if (id == R.id.nav_books) {
+            // Iniciar MainActivity_2 para la pantalla de libros
+            Intent intent = new Intent(this, MainActivity_2.class);
+            startActivity(intent);
+            // No cargar ningún fragmento ya que estamos iniciando otra actividad
+            drawer.closeDrawer(GravityCompat.START);
+            return true;
         } else if (id == R.id.nav_logout) {
             handleLogout();
             fragment = new LoginFragment();
@@ -152,6 +160,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         navigationView.getMenu().findItem(R.id.nav_crud).setVisible(false);
         navigationView.getMenu().findItem(R.id.nav_profile).setVisible(false);
         navigationView.getMenu().findItem(R.id.nav_logout).setVisible(false);
+        navigationView.getMenu().findItem(R.id.nav_books).setVisible(false);
         
         // Show appropriate menu items based on role
         if (role.equals(RoleManager.ROLE_GUEST)) {
@@ -169,6 +178,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             navigationView.getMenu().findItem(R.id.nav_login).setVisible(false);
             navigationView.getMenu().findItem(R.id.nav_register).setVisible(false);
             navigationView.getMenu().findItem(R.id.nav_logout).setVisible(true);
+            navigationView.getMenu().findItem(R.id.nav_books).setVisible(true);
             
             // Actualizar header con información del usuario
             TextView usernameTextView = navigationView.getHeaderView(0).findViewById(R.id.header_username);

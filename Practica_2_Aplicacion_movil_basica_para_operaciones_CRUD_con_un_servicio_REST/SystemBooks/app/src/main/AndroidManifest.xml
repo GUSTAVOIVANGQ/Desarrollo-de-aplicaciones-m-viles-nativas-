@@ -33,7 +33,10 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        
+        <activity
+            android:name=".MainActivity_2"
+            android:exported="true"
+            android:label="@string/app_name" />
         <!-- Proveedor de archivos para compartir imágenes -->
         <provider
             android:name="androidx.core.content.FileProvider"
@@ -44,6 +47,11 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
         </provider>
+                <!-- Añadir BookDetailActivity -->
+        <activity
+            android:name=".activities.BookDetailActivity"
+            android:label="@string/book_details"
+            android:parentActivityName=".MainActivity_2" />
     </application>
 
 </manifest>

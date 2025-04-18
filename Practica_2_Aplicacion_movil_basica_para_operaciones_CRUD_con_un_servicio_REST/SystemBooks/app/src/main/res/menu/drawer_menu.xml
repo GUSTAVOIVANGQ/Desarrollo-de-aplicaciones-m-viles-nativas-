@@ -30,6 +30,10 @@
 
     <group android:id="@+id/group_authenticated" android:checkableBehavior="single" android:visible="false">
         <item
+            android:id="@+id/nav_books"
+            android:icon="@drawable/ic_book"
+            android:title="@string/books" />
+        <item
             android:id="@+id/nav_logout"
             android:icon="@drawable/ic_logout"
             android:title="@string/logout" />
