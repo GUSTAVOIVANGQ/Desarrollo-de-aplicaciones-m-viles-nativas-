@@ -16,7 +16,7 @@ public class ApiClient {
     // Cambiar la URL según corresponda a tu entorno:
     // Para emulador Android: "http://10.0.2.2:8088/"
     // Para dispositivo físico: "http://192.168.8.71:8088/"
-    private static final String BASE_URL = "http://192.168.8.71:8088/"; // URL para el emulador
+    private static final String BASE_URL = "http://192.168.8.71:8088/"; // URL para el dispositivo
     
     private static Retrofit retrofit = null;
     private static AuthInterceptor authInterceptor;

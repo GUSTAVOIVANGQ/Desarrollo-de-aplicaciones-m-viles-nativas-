@@ -13,7 +13,9 @@ import com.example.systembooks.models.FavoriteBook;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class FavoritesRepository {
     private static final String TAG = "FavoritesRepository";
@@ -152,5 +154,70 @@ public class FavoritesRepository {
         }
         
         return favorites;
+    }
+    
+    /**
+     * Get all favorites for all users (admin function)
+     * @return Map of user IDs to lists of their favorite books
+     */
+    public Map<Long, List<FavoriteBook>> getAllUsersFavorites() {
+        Map<Long, List<FavoriteBook>> allFavorites = new HashMap<>();
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        Cursor cursor = null;
+        
+        try {
+            // No selection needed - we want all favorites
+            String orderBy = DatabaseHelper.COLUMN_USER_ID + " ASC, " 
+                           + DatabaseHelper.COLUMN_DATE_ADDED + " DESC";
+            
+            cursor = db.query(
+                    DatabaseHelper.TABLE_FAVORITES,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    orderBy
+            );
+            
+            int idColumnIndex = cursor.getColumnIndex(DatabaseHelper.COLUMN_ID);
+            int userIdColumnIndex = cursor.getColumnIndex(DatabaseHelper.COLUMN_USER_ID);
+            int bookIdColumnIndex = cursor.getColumnIndex(DatabaseHelper.COLUMN_BOOK_ID);
+            int titleColumnIndex = cursor.getColumnIndex(DatabaseHelper.COLUMN_TITLE);
+            int authorColumnIndex = cursor.getColumnIndex(DatabaseHelper.COLUMN_AUTHOR);
+            int coverUrlColumnIndex = cursor.getColumnIndex(DatabaseHelper.COLUMN_COVER_URL);
+            int dateAddedColumnIndex = cursor.getColumnIndex(DatabaseHelper.COLUMN_DATE_ADDED);
+            
+            while (cursor.moveToNext()) {
+                long id = cursor.getLong(idColumnIndex);
+                long userId = cursor.getLong(userIdColumnIndex);
+                String bookId = cursor.getString(bookIdColumnIndex);
+                String title = cursor.getString(titleColumnIndex);
+                String author = cursor.getString(authorColumnIndex);
+                String coverUrl = cursor.getString(coverUrlColumnIndex);
+                long timestamp = cursor.getLong(dateAddedColumnIndex);
+                
+                FavoriteBook favoriteBook = new FavoriteBook(
+                        id, userId, bookId, title, author, coverUrl, new Date(timestamp)
+                );
+                
+                // Add to the appropriate list in the map
+                if (!allFavorites.containsKey(userId)) {
+                    allFavorites.put(userId, new ArrayList<>());
+                }
+                allFavorites.get(userId).add(favoriteBook);
+            }
+        } catch (SQLiteException e) {
+            Log.e(TAG, "Error getting all users favorites", e);
+        } finally {
+            if (cursor != null && !cursor.isClosed()) {
+                cursor.close();
+            }
+            if (db != null && db.isOpen()) {
+                db.close();
+            }
+        }
+        
+        return allFavorites;
     }
 }

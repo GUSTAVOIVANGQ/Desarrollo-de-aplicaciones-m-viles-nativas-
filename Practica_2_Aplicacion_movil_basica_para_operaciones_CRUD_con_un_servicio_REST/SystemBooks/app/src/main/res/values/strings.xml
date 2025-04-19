@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">SystemBooks</string>
     <string name="login">Login</string>
-    <string name="register">Register</string>
+    <string name="register">Registro</string>
     <string name="crud_operations">CRUD Operations</string>
     <string name="profile">Profile</string>
     <string name="logout">Logout</string>
@@ -10,7 +10,7 @@
     <string name="guest">Guest</string>
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>
-    <string name="user_list">List of users</string>
+    <string name="user_list">Lista de usuarios</string>
     <string name="books">Libros</string>
     <!-- Login y Registro -->
     <string name="login_title">Iniciar Sesión</string>
@@ -69,6 +69,10 @@
     
     <!-- Home Fragment -->
     <string name="featured_books">Libros destacados</string>
+    <string name="recommended_books">Libros recomendados</string>
+    <string name="loading_recommendations">Cargando recomendaciones...</string>
+    <string name="error_loading_recommendations">Error al cargar las recomendaciones</string>
+    <string name="no_recommendations">No hay recomendaciones disponibles</string>
     
     <!-- Search Fragment -->
     <string name="search_hint">Buscar libros por título, autor…</string>
@@ -113,4 +117,16 @@
     <string name="no_search_history">No hay historial de búsqueda</string>
     <string name="clear_search_history">Borrar historial de búsqueda</string>
     <string name="clear_search_history_confirmation">¿Estás seguro de que deseas borrar todo el historial de búsqueda?</string>
+    
+    <!-- Admin User Data View -->
+    <string name="admin_user_data">Datos de Usuarios</string>
+    <string name="no_search_history_found">No se encontró historial de búsqueda</string>
+    <string name="no_favorites_found">No se encontraron favoritos</string>
+    <string name="show_details">Mostrar detalles</string>
+    <string name="hide_details">Ocultar detalles</string>
+    <string name="search_history_of">Historial de búsqueda de %1$s</string>
+    <string name="favorites_of">Favoritos de %1$s</string>
+    <string name="user_email">%1$s</string>
+    <string name="items_count">%1$d items</string>
+    <string name="load_error">Error al cargar datos</string>
 </resources>

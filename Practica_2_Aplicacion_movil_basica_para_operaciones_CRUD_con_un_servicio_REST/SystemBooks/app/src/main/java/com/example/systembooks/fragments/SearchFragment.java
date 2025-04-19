@@ -19,6 +19,8 @@ import com.example.systembooks.R;
 import com.example.systembooks.adapters.BookAdapter;
 import com.example.systembooks.models.Book;
 import com.example.systembooks.repositories.BookRepository;
+import com.example.systembooks.repositories.SearchHistoryRepository;
+import com.example.systembooks.util.SessionManager;
 import com.example.systembooks.utils.NetworkUtils;
 
 import java.util.ArrayList;
@@ -37,6 +39,10 @@ public class SearchFragment extends Fragment {
     private SwipeRefreshLayout swipeRefreshLayout;
     private BookRepository bookRepository;
     private String currentQuery = "";
+    
+    // Añadir repositorio de historial y gestor de sesión
+    private SearchHistoryRepository searchHistoryRepository;
+    private SessionManager sessionManager;
 
     @Nullable
     @Override
@@ -55,6 +61,10 @@ public class SearchFragment extends Fragment {
         
         // Inicializar repositorio
         bookRepository = new BookRepository(requireContext());
+        
+        // Inicializar repositorio de historial y gestor de sesión
+        searchHistoryRepository = new SearchHistoryRepository(requireContext());
+        sessionManager = new SessionManager(requireContext());
         
         setupRecyclerView();
         setupSearchView();
@@ -125,6 +135,15 @@ public class SearchFragment extends Fragment {
             @Override
             public void onSuccess(List<Book> result) {
                 swipeRefreshLayout.setRefreshing(false);
+                
+                // Guardar la búsqueda en el historial si el usuario está logueado
+                if (sessionManager.isLoggedIn()) {
+                    // Ejecutar en un hilo separado para no bloquear la UI
+                    new Thread(() -> {
+                        long userId = sessionManager.getUserId();
+                        searchHistoryRepository.saveSearchQuery(userId, query);
+                    }).start();
+                }
                 
                 if (result.isEmpty()) {
                     showEmptyView();

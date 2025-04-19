@@ -19,6 +19,7 @@ import com.example.systembooks.fragment.LoginFragment;
 import com.example.systembooks.fragment.ProfileFragment;
 import com.example.systembooks.fragment.RegisterFragment;
 import com.example.systembooks.fragment.UserManagementFragment;
+import com.example.systembooks.fragments.AdminUserDataFragment;
 import com.example.systembooks.repository.ApiRepository;
 import com.example.systembooks.util.RoleManager;
 import com.example.systembooks.util.SessionManager;
@@ -99,6 +100,14 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 fragment = new AccessDeniedFragment();
                 Toast.makeText(this, R.string.access_denied_message, Toast.LENGTH_SHORT).show();
             }
+        } else if (id == R.id.nav_admin_user_data) {
+            // Verify admin permissions for viewing user data
+            if (roleManager.isAdmin()) {
+                fragment = new AdminUserDataFragment();
+            } else {
+                fragment = new AccessDeniedFragment();
+                Toast.makeText(this, R.string.access_denied_message, Toast.LENGTH_SHORT).show();
+            }
         } else if (id == R.id.nav_profile) {
             // Verificar si tiene permisos de usuario
             if (roleManager.isUser() || roleManager.isAdmin()) {
@@ -156,16 +165,15 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
     public void showMenuItemsByRole(String role) {
         NavigationView navigationView = findViewById(R.id.nav_view);
         
-        // First, hide all role-specific groups
-        navigationView.getMenu().findItem(R.id.nav_crud).setVisible(false);
-        navigationView.getMenu().findItem(R.id.nav_profile).setVisible(false);
-        navigationView.getMenu().findItem(R.id.nav_logout).setVisible(false);
-        navigationView.getMenu().findItem(R.id.nav_books).setVisible(false);
+        // Hide all menu groups first
+        navigationView.getMenu().setGroupVisible(R.id.group_guest, false);
+        navigationView.getMenu().setGroupVisible(R.id.group_admin, false);
+        navigationView.getMenu().setGroupVisible(R.id.group_user, false);
+        navigationView.getMenu().setGroupVisible(R.id.group_authenticated, false);
         
         // Show appropriate menu items based on role
         if (role.equals(RoleManager.ROLE_GUEST)) {
-            navigationView.getMenu().findItem(R.id.nav_login).setVisible(true);
-            navigationView.getMenu().findItem(R.id.nav_register).setVisible(true);
+            navigationView.getMenu().setGroupVisible(R.id.group_guest, true);
             
             // Actualizar header con información de invitado
             TextView usernameTextView = navigationView.getHeaderView(0).findViewById(R.id.header_username);
@@ -175,10 +183,7 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             roleTextView.setText(R.string.guest);
             
         } else {
-            navigationView.getMenu().findItem(R.id.nav_login).setVisible(false);
-            navigationView.getMenu().findItem(R.id.nav_register).setVisible(false);
-            navigationView.getMenu().findItem(R.id.nav_logout).setVisible(true);
-            navigationView.getMenu().findItem(R.id.nav_books).setVisible(true);
+            navigationView.getMenu().setGroupVisible(R.id.group_authenticated, true);
             
             // Actualizar header con información del usuario
             TextView usernameTextView = navigationView.getHeaderView(0).findViewById(R.id.header_username);
@@ -190,11 +195,11 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             usernameTextView.setText(userName);
             
             if (role.equals(RoleManager.ROLE_ADMIN)) {
-                navigationView.getMenu().findItem(R.id.nav_crud).setVisible(true);
-                navigationView.getMenu().findItem(R.id.nav_profile).setVisible(true);
+                navigationView.getMenu().setGroupVisible(R.id.group_admin, true);
+                navigationView.getMenu().setGroupVisible(R.id.group_user, true);
                 roleTextView.setText(R.string.admin_role_name);
             } else if (role.equals(RoleManager.ROLE_USER)) {
-                navigationView.getMenu().findItem(R.id.nav_profile).setVisible(true);
+                navigationView.getMenu().setGroupVisible(R.id.group_user, true);
                 roleTextView.setText(R.string.user_role_name);
             }
         }
