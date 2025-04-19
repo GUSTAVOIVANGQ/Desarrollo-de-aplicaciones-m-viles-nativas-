@@ -13,12 +13,19 @@ import com.example.systembooks.model.LoginResponse;
 import com.example.systembooks.model.RegisterRequest;
 import com.example.systembooks.model.User;
 import com.example.systembooks.util.SessionManager;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonSyntaxException;
+import com.google.gson.reflect.TypeToken;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.List;
 
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
 import okhttp3.RequestBody;
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -191,6 +198,76 @@ public class ApiRepository {
     }
 
     public void getAllUsers(ApiCallback<List<User>> apiCallback) {
+        Log.d(TAG, "Fetching all users");
+
+        // Usar Retrofit directamente en lugar de HttpUrlConnection
+        authenticatedApiService.getAllUsers().enqueue(new Callback<ApiResponse<List<User>>>() {
+            @Override
+            public void onResponse(@NonNull Call<ApiResponse<List<User>>> call, @NonNull Response<ApiResponse<List<User>>> response) {
+                // Log para depuración
+                Log.d(TAG, "Response received: isSuccessful=" + response.isSuccessful() 
+                      + ", code=" + response.code()
+                      + ", message=" + response.message()
+                      + ", url=" + call.request().url());
+                
+                try {
+                    if (response.isSuccessful() && response.body() != null) {
+                        ApiResponse<List<User>> apiResponse = response.body();
+                        
+                        // Verificar el token en la petición actual
+                        String requestToken = call.request().header("Authorization");
+                        Log.d(TAG, "Auth token used: " + (requestToken != null ? requestToken : "No token"));
+                        
+                        // Verificar que la respuesta contenga datos
+                        if (apiResponse != null && apiResponse.getData() != null) {
+                            List<User> users = apiResponse.getData();
+                            Log.d(TAG, "Users fetched successfully: " + users.size() + " users");
+                            apiCallback.onSuccess(users);
+                        } else {
+                            Log.e(TAG, "Response body or data is null");
+                            apiCallback.onError("No data received from server");
+                        }
+                    } else {
+                        // Si no es exitoso, intentar recuperar el cuerpo del error
+                        String errorBody = "";
+                        if (response.errorBody() != null) {
+                            errorBody = response.errorBody().string();
+                            Log.e(TAG, "Error response body: " + errorBody);
+                        }
+                        
+                        // Verificar si es un problema de token
+                        if (response.code() == 401 || response.code() == 403 || errorBody.contains("login")) {
+                            Log.e(TAG, "Authentication failed. Token may be invalid or expired.");
+                            
+                            // Intento de actualizar token - depende de tu lógica de autenticación
+                            // Por ahora, notificamos el error de autenticación
+                            apiCallback.onError("Authentication failed. Please login again.");
+                        } else {
+                            apiCallback.onError("Server error: " + response.code() + " " + response.message());
+                        }
+                    }
+                } catch (Exception e) {
+                    Log.e(TAG, "Error processing response: " + e.getMessage(), e);
+                    apiCallback.onError("Error processing response: " + e.getMessage());
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<ApiResponse<List<User>>> call, @NonNull Throwable t) {
+                Log.e(TAG, "Network error when fetching users: " + t.getMessage());
+                apiCallback.onError("Network error: " + t.getMessage());
+            }
+        });
+    }
+    
+    // Helper method to get UI thread handler
+    private android.os.Handler getHandler() {
+        try {
+            return new android.os.Handler(android.os.Looper.getMainLooper());
+        } catch (Exception e) {
+            Log.e(TAG, "Error creating handler: " + e.getMessage());
+            return null;
+        }
     }
 
     public void deleteUser(Long id, ApiCallback<Void> apiCallback) {

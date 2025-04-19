@@ -11,11 +11,13 @@ import java.util.concurrent.TimeUnit;
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Retrofit;
-import retrofit2.converter.gson.GsonConverterFactory;
 
 public class ApiClient {
-    // Asegúrate de que esta sea la IP correcta de tu servidor
-    private static final String BASE_URL = "http://192.168.8.71:8088/"; 
+    // Cambiar la URL según corresponda a tu entorno:
+    // Para emulador Android: "http://10.0.2.2:8088/"
+    // Para dispositivo físico: "http://192.168.8.71:8088/"
+    private static final String BASE_URL = "http://192.168.8.71:8088/"; // URL para el emulador
+    
     private static Retrofit retrofit = null;
     private static AuthInterceptor authInterceptor;
     
@@ -38,7 +40,7 @@ public class ApiClient {
             
             retrofit = new Retrofit.Builder()
                     .baseUrl(BASE_URL)
-                    .addConverterFactory(GsonConverterFactory.create(gson))
+                    .addConverterFactory(LenientGsonConverterFactory.create(gson))
                     .client(client)
                     .build();
         }
@@ -49,6 +51,9 @@ public class ApiClient {
     public static Retrofit getAuthenticatedClient(Context context) {
         SessionManager sessionManager = new SessionManager(context);
         String token = sessionManager.getAuthToken();
+        
+        // Log para verificar el token
+        android.util.Log.d("ApiClient", "Using token for auth: " + (token != null && !token.isEmpty() ? "Token present" : "No token"));
         
         if (authInterceptor == null) {
             authInterceptor = new AuthInterceptor(token);
@@ -62,11 +67,19 @@ public class ApiClient {
         OkHttpClient client = new OkHttpClient.Builder()
                 .addInterceptor(logging)
                 .addInterceptor(authInterceptor)
+                .connectTimeout(30, TimeUnit.SECONDS)  // Aumentar timeout
+                .readTimeout(30, TimeUnit.SECONDS)     // Aumentar timeout
+                .writeTimeout(30, TimeUnit.SECONDS)    // Aumentar timeout
                 .build();
+        
+        // Crear Gson con setLenient(true) para manejar JSON potencialmente malformado
+        Gson gson = new GsonBuilder()
+                .setLenient() // Para manejo más flexible de JSON
+                .create();
         
         return new Retrofit.Builder()
                 .baseUrl(BASE_URL)
-                .addConverterFactory(GsonConverterFactory.create())
+                .addConverterFactory(LenientGsonConverterFactory.create(gson))
                 .client(client)
                 .build();
     }
