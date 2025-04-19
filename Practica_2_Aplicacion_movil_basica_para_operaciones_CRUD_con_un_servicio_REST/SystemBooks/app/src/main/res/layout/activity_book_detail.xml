@@ -210,4 +210,15 @@
             android:layout_marginTop="16dp"
             android:text="@string/retry" />
     </LinearLayout>
+
+    <!-- Botón de favoritos -->
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fab_favorite"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="16dp"
+        android:contentDescription="@string/add_to_favorites"
+        android:src="@drawable/ic_favorite_border"
+        app:tint="@android:color/white" />
 </FrameLayout>

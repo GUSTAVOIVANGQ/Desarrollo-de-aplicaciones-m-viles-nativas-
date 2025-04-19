@@ -22,10 +22,12 @@ public class BookRepository {
 
     private Context context;
     private OpenLibraryApi apiService;
+    private SearchHistoryRepository searchHistoryRepository;
 
     public BookRepository(Context context) {
         this.context = context;
         this.apiService = ApiClient.getApiService(context);
+        this.searchHistoryRepository = new SearchHistoryRepository(context);
     }
 
     // Interfaz para manejar respuestas asincrónicas
@@ -56,10 +58,21 @@ public class BookRepository {
 
     // Buscar libros por consulta
     public void searchBooks(String query, int page, int limit, BookCallback<List<Book>> callback) {
+        // Modificado para guardar el historial de búsqueda
+        searchBooks(query, page, limit, 0, callback); // userId predeterminado = 0 si no se especifica
+    }
+
+    // Buscar libros por consulta con ID de usuario para seguimiento del historial
+    public void searchBooks(String query, int page, int limit, long userId, BookCallback<List<Book>> callback) {
         apiService.searchBooks(query, page, limit).enqueue(new Callback<SearchResponse>() {
             @Override
             public void onResponse(Call<SearchResponse> call, Response<SearchResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
+                    // Guardar la búsqueda en el historial si el usuario está logueado (userId > 0)
+                    if (userId > 0) {
+                        searchHistoryRepository.saveSearchQuery(userId, query);
+                    }
+                    
                     List<Book> books = convertToBooks(response.body().getDocs());
                     callback.onSuccess(books);
                 } else {

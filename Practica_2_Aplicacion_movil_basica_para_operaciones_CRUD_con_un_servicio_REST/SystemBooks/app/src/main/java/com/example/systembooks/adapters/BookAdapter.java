@@ -24,10 +24,23 @@ public class BookAdapter extends RecyclerView.Adapter<BookAdapter.BookViewHolder
 
     private Context context;
     private List<Book> books;
+    private OnBookClickListener listener;
+    
+    // Interface for handling book clicks
+    public interface OnBookClickListener {
+        void onBookClick(Book book);
+    }
 
     public BookAdapter(Context context, List<Book> books) {
         this.context = context;
         this.books = books;
+    }
+    
+    // Constructor with click listener
+    public BookAdapter(Context context, List<Book> books, OnBookClickListener listener) {
+        this.context = context;
+        this.books = books;
+        this.listener = listener;
     }
 
     @NonNull
@@ -57,9 +70,15 @@ public class BookAdapter extends RecyclerView.Adapter<BookAdapter.BookViewHolder
         }
         
         holder.itemView.setOnClickListener(v -> {
-            Intent intent = new Intent(context, BookDetailActivity.class);
-            intent.putExtra(BookDetailActivity.EXTRA_BOOK_ID, book.getId());
-            context.startActivity(intent);
+            if (listener != null) {
+                // Use the listener if available
+                listener.onBookClick(book);
+            } else {
+                // Otherwise use default behavior
+                Intent intent = new Intent(context, BookDetailActivity.class);
+                intent.putExtra(BookDetailActivity.EXTRA_BOOK_ID, book.getId());
+                context.startActivity(intent);
+            }
         });
     }
 

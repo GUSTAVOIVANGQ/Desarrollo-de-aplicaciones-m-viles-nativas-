@@ -28,7 +28,7 @@
     <string name="error_empty_fields">Todos los campos son obligatorios</string>
     <string name="error_passwords_not_match">Las contraseñas no coinciden</string>
     <string name="error_invalid_email">Correo electrónico inválido</string>
-    
+    <string name="login_required">Inicie sesión para acceder a esta función</string>
     <!-- Perfil y Gestión de Usuarios -->
     <string name="profile_title">Mi Perfil</string>
     <string name="change_photo">Cambiar Foto</string>
@@ -73,6 +73,9 @@
     <!-- Search Fragment -->
     <string name="search_hint">Buscar libros por título, autor…</string>
     <string name="no_results">No se encontraron resultados</string>
+    <string name="search_results">Search Results</string>
+    <string name="search_results_for">Results for "%1$s"</string>
+    <string name="no_results_found">No results found</string>
     
     <!-- Categories Fragment -->
     <string name="categories_description">Explora libros por categoría</string>
@@ -95,4 +98,19 @@
     <string name="error_network">Sin conexión a internet. Por favor, compruebe su conexión.</string>
     <string name="error_server">Error del servidor. Por favor, inténtelo de nuevo más tarde.</string>
     <string name="retry">Reintentar</string>
+    
+    <!-- Favorite Books -->
+    <string name="favorites">Favoritos</string>
+    <string name="add_to_favorites">Agregar a favoritos</string>
+    <string name="remove_from_favorites">Quitar de favoritos</string>
+    <string name="added_to_favorites">Libro agregado a favoritos</string>
+    <string name="removed_from_favorites">Libro quitado de favoritos</string>
+    <string name="error_updating_favorites">Error al actualizar favoritos</string>
+    <string name="no_favorites">No tienes libros favoritos</string>
+    
+    <!-- Search History -->
+    <string name="search_history">Historial de búsqueda</string>
+    <string name="no_search_history">No hay historial de búsqueda</string>
+    <string name="clear_search_history">Borrar historial de búsqueda</string>
+    <string name="clear_search_history_confirmation">¿Estás seguro de que deseas borrar todo el historial de búsqueda?</string>
 </resources>

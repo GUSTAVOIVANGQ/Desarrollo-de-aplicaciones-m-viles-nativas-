@@ -16,7 +16,10 @@ import com.bumptech.glide.request.RequestOptions;
 import com.example.systembooks.R;
 import com.example.systembooks.models.Book;
 import com.example.systembooks.repositories.BookRepository;
+import com.example.systembooks.repositories.FavoritesRepository;
+import com.example.systembooks.util.SessionManager;
 import com.example.systembooks.utils.NetworkUtils;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 public class BookDetailActivity extends AppCompatActivity {
 
@@ -33,7 +36,14 @@ public class BookDetailActivity extends AppCompatActivity {
     private View contentView;
     private View errorView;
     private TextView errorMessage;
+    private FloatingActionButton fabFavorite;
+    
     private BookRepository bookRepository;
+    private FavoritesRepository favoritesRepository;
+    private SessionManager sessionManager;
+    
+    private Book currentBook;
+    private boolean isFavorite = false;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -47,12 +57,22 @@ public class BookDetailActivity extends AppCompatActivity {
         
         initViews();
         
-        // Inicializar repositorio
+        // Initialize repositories and session manager
         bookRepository = new BookRepository(this);
+        favoritesRepository = new FavoritesRepository(this);
+        sessionManager = new SessionManager(this);
         
         String bookId = getIntent().getStringExtra(EXTRA_BOOK_ID);
         if (bookId != null) {
             loadBookDetails(bookId);
+            
+            // Check if book is in favorites (if user is logged in)
+            if (sessionManager.isLoggedIn()) {
+                checkFavoriteStatus(bookId);
+            } else {
+                // Hide favorite button if not logged in
+                fabFavorite.setVisibility(View.GONE);
+            }
         } else {
             showError("No se encontró el ID del libro");
         }
@@ -66,6 +86,7 @@ public class BookDetailActivity extends AppCompatActivity {
         bookYear = findViewById(R.id.book_year);
         bookDescription = findViewById(R.id.book_description);
         bookPageCount = findViewById(R.id.book_page_count);
+        fabFavorite = findViewById(R.id.fab_favorite);
         
         // Vistas de carga y error
         loadingView = findViewById(R.id.loading_view);
@@ -80,6 +101,9 @@ public class BookDetailActivity extends AppCompatActivity {
                 loadBookDetails(bookId);
             }
         });
+        
+        // Setup favorite button
+        fabFavorite.setOnClickListener(v -> toggleFavorite());
     }
     
     private void loadBookDetails(String bookId) {
@@ -94,7 +118,10 @@ public class BookDetailActivity extends AppCompatActivity {
         bookRepository.getBookDetails(bookId, new BookRepository.BookCallback<Book>() {
             @Override
             public void onSuccess(Book book) {
-                runOnUiThread(() -> displayBookDetails(book));
+                runOnUiThread(() -> {
+                    currentBook = book;
+                    displayBookDetails(book);
+                });
             }
 
             @Override
@@ -149,22 +176,83 @@ public class BookDetailActivity extends AppCompatActivity {
         showContent();
     }
     
+    private void checkFavoriteStatus(String bookId) {
+        Long userId = sessionManager.getUserId();
+        if (userId == -1) return;
+        
+        new Thread(() -> {
+            boolean isBookFavorite = favoritesRepository.isFavorite(userId, bookId);
+            runOnUiThread(() -> {
+                isFavorite = isBookFavorite;
+                updateFavoriteIcon();
+            });
+        }).start();
+    }
+    
+    private void toggleFavorite() {
+        if (currentBook == null || !sessionManager.isLoggedIn()) return;
+        
+        Long userId = sessionManager.getUserId();
+        if (userId == -1) {
+            Toast.makeText(this, "Inicia sesión para agregar favoritos", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        
+        new Thread(() -> {
+            final boolean success;
+            if (isFavorite) {
+                success = favoritesRepository.removeFromFavorites(userId, currentBook.getId());
+            } else {
+                success = favoritesRepository.addToFavorites(userId, currentBook);
+            }
+            
+            runOnUiThread(() -> {
+                if (success) {
+                    isFavorite = !isFavorite;
+                    updateFavoriteIcon();
+                    
+                    // Show appropriate message
+                    String message = isFavorite 
+                            ? getString(R.string.added_to_favorites) 
+                            : getString(R.string.removed_from_favorites);
+                    Toast.makeText(BookDetailActivity.this, message, Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(BookDetailActivity.this, 
+                            getString(R.string.error_updating_favorites), 
+                            Toast.LENGTH_SHORT).show();
+                }
+            });
+        }).start();
+    }
+    
+    private void updateFavoriteIcon() {
+        int iconRes = isFavorite 
+                ? R.drawable.ic_favorite 
+                : R.drawable.ic_favorite_border;
+        fabFavorite.setImageResource(iconRes);
+    }
+    
     private void showLoading() {
         loadingView.setVisibility(View.VISIBLE);
         contentView.setVisibility(View.GONE);
         errorView.setVisibility(View.GONE);
+        fabFavorite.setVisibility(View.GONE);
     }
     
     private void showContent() {
         loadingView.setVisibility(View.GONE);
         contentView.setVisibility(View.VISIBLE);
         errorView.setVisibility(View.GONE);
+        if (sessionManager.isLoggedIn()) {
+            fabFavorite.setVisibility(View.VISIBLE);
+        }
     }
     
     private void showError(String message) {
         loadingView.setVisibility(View.GONE);
         contentView.setVisibility(View.GONE);
         errorView.setVisibility(View.VISIBLE);
+        fabFavorite.setVisibility(View.GONE);
         errorMessage.setText(message);
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
     }
