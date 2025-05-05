@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:showIn="navigation_view">
+
+    <group android:id="@+id/group_guest" android:checkableBehavior="single">
+        <item
+            android:id="@+id/nav_login"
+            android:icon="@drawable/ic_login"
+            android:title="@string/login" />
+        <item
+            android:id="@+id/nav_register"
+            android:icon="@drawable/ic_register"
+            android:title="@string/register" />
+    </group>
+
+    <group android:id="@+id/group_admin" android:checkableBehavior="single" android:visible="false">
+        <item
+            android:id="@+id/nav_crud"
+            android:icon="@drawable/ic_crud"
+            android:title="@string/crud_operations" />
+        <item
+            android:id="@+id/nav_admin_user_data"
+            android:icon="@drawable/ic_data"
+            android:title="@string/admin_user_data" />
+    </group>
+
+    <group android:id="@+id/group_user" android:checkableBehavior="single" android:visible="false">
+        <item
+            android:id="@+id/nav_profile"
+            android:icon="@drawable/ic_profile"
+            android:title="@string/profile" />
+    </group>
+
+    <group android:id="@+id/group_authenticated" android:checkableBehavior="single" android:visible="false">
+        <item
+            android:id="@+id/nav_books"
+            android:icon="@drawable/ic_book"
+            android:title="@string/books" />
+        <item
+            android:id="@+id/nav_logout"
+            android:icon="@drawable/ic_logout"
+            android:title="@string/logout" />
+    </group>
+</menu>

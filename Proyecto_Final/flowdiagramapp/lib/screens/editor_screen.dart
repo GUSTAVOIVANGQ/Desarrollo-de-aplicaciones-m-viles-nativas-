@@ -1,0 +1,577 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import '../widgets/flow_diagram_canvas.dart';
+import '../widgets/node_palette.dart';
+import '../widgets/node_editor_dialog.dart';
+import '../widgets/validation_result_dialog.dart';
+import 'load_diagram_screen.dart';
+import '../widgets/save_diagram_dialog.dart';
+import '../models/diagram_node.dart';
+import '../models/diagram_validator.dart';
+import '../models/code_generator.dart';
+import '../models/saved_diagram.dart';
+import '../services/database_service.dart';
+
+class EditorScreen extends StatefulWidget {
+  final SavedDiagram? initialDiagram;
+
+  const EditorScreen({super.key, this.initialDiagram});
+
+  @override
+  State<EditorScreen> createState() => _EditorScreenState();
+}
+
+class _EditorScreenState extends State<EditorScreen> {
+  final List<DiagramNode> nodes = [];
+  final List<Connection> connections = [];
+  DiagramNode? selectedNode;
+  DiagramNode? connectionStart;
+  Offset panOffset = Offset.zero;
+  double currentScale = 1.0;
+  bool isConnecting = false;
+
+  // Para control de guardado
+  SavedDiagram? currentDiagram;
+  final DatabaseService _databaseService = DatabaseService();
+  bool _hasUnsavedChanges = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Si se proporciona un diagrama inicial, cargarlo
+    if (widget.initialDiagram != null) {
+      _loadDiagram(widget.initialDiagram!);
+    }
+  }
+
+  void _loadDiagram(SavedDiagram diagram) {
+    setState(() {
+      nodes.clear();
+      connections.clear();
+
+      // Agregar nodos y conexiones del diagrama cargado
+      nodes.addAll(diagram.nodes);
+      connections.addAll(diagram.connections);
+
+      // Almacenar referencia al diagrama actual
+      currentDiagram = diagram;
+      _hasUnsavedChanges = false;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(currentDiagram?.name ?? 'Diagrama de Flujo'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => _handleBackNavigation(context),
+        ),
+        actions: [
+          // Botón para validar el diagrama
+          IconButton(
+            icon: const Icon(Icons.check_circle_outline),
+            tooltip: 'Validar diagrama',
+            onPressed: _validateDiagram,
+          ),
+          // Botón para guardar diagrama
+          IconButton(
+            icon: _hasUnsavedChanges
+                ? const Icon(Icons.save, color: Colors.amber)
+                : const Icon(Icons.save),
+            tooltip: 'Guardar diagrama',
+            onPressed: _showSaveDiagramDialog,
+          ),
+          // Botón para cargar diagrama
+          IconButton(
+            icon: const Icon(Icons.folder_open),
+            tooltip: 'Cargar diagrama',
+            onPressed: () => _navigateToLoadDiagram(context),
+          ),
+          IconButton(
+            icon: const Icon(Icons.code),
+            tooltip: 'Generar código',
+            onPressed: _generateCode,
+          ),
+          if (selectedNode != null)
+            IconButton(
+              icon: const Icon(Icons.edit),
+              tooltip: 'Editar nodo',
+              onPressed: () => _editSelectedNode(),
+            ),
+          if (selectedNode != null)
+            IconButton(
+              icon: const Icon(Icons.delete),
+              tooltip: 'Eliminar nodo',
+              onPressed: () => _deleteSelectedNode(),
+            ),
+        ],
+      ),
+      body: Row(
+        children: [
+          // Panel lateral con la paleta de nodos
+          NodePalette(
+            onNodeSelected: (nodeType) {
+              _addNode(nodeType);
+            },
+          ),
+
+          // Área principal del canvas
+          Expanded(
+            child: Stack(
+              children: [
+                FlowDiagramCanvas(
+                  nodes: nodes,
+                  connections: connections,
+                  selectedNode: selectedNode,
+                  panOffset: panOffset,
+                  scale: currentScale,
+                  onPanUpdate: (details) {
+                    if (!isConnecting) {
+                      setState(() {
+                        panOffset += details.delta;
+                      });
+                    }
+                  },
+                  onScaleUpdate: (scale) {
+                    if (!isConnecting) {
+                      setState(() {
+                        currentScale = scale.scale.clamp(0.5, 2.0);
+                      });
+                    }
+                  },
+                  onNodeTap: (node) {
+                    setState(() {
+                      if (connectionStart != null) {
+                        // Crear conexión entre nodos
+                        _createConnection(connectionStart!, node);
+                        connectionStart = null;
+                        isConnecting = false;
+                        _showSnackBar('Conexión creada');
+                      } else {
+                        selectedNode = node;
+                      }
+                    });
+                  },
+                  onNodeLongPress: (node) {
+                    setState(() {
+                      connectionStart = node;
+                      isConnecting = true;
+                      _showSnackBar('Selecciona otro nodo para conectarlos');
+                    });
+                  },
+                  onNodeDragUpdate: (node, offset) {
+                    setState(() {
+                      node.position = offset;
+                      _hasUnsavedChanges = true;
+                    });
+                  },
+                ),
+
+                // Indicador visual cuando estamos en modo conexión
+                if (isConnecting)
+                  Positioned(
+                    top: 16,
+                    left: 0,
+                    right: 0,
+                    child: Center(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.withOpacity(0.8),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: const Text(
+                          'Modo conexión: Toca otro nodo para conectar',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+      floatingActionButton: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (selectedNode != null)
+            FloatingActionButton(
+              onPressed: _editSelectedNode,
+              heroTag: 'edit',
+              mini: true,
+              tooltip: 'Editar nodo',
+              child: const Icon(Icons.edit),
+            ),
+          const SizedBox(height: 8),
+          if (connectionStart != null)
+            FloatingActionButton(
+              onPressed: () {
+                setState(() {
+                  connectionStart = null;
+                  isConnecting = false;
+                });
+                _showSnackBar('Conexión cancelada');
+              },
+              heroTag: 'cancel',
+              mini: true,
+              tooltip: 'Cancelar conexión',
+              backgroundColor: Colors.red,
+              child: const Icon(Icons.close),
+            ),
+          const SizedBox(height: 8),
+          FloatingActionButton(
+            onPressed: () {
+              setState(() {
+                // Resetear el desplazamiento y la escala
+                panOffset = Offset.zero;
+                currentScale = 1.0;
+              });
+            },
+            heroTag: 'center',
+            tooltip: 'Centrar diagrama',
+            child: const Icon(Icons.center_focus_strong),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Control de navegación hacia atrás con verificación de cambios sin guardar
+  Future<void> _handleBackNavigation(BuildContext context) async {
+    if (!_hasUnsavedChanges) {
+      Navigator.pop(context);
+      return;
+    }
+
+    final bool shouldDiscard = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('¿Descartar cambios?'),
+            content: const Text(
+              'Hay cambios sin guardar. ¿Estás seguro de que quieres salir sin guardar?',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('Cancelar'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                style: FilledButton.styleFrom(backgroundColor: Colors.red),
+                child: const Text('Descartar'),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+
+    if (shouldDiscard && mounted) {
+      Navigator.pop(context);
+    }
+  }
+
+  void _addNode(NodeType nodeType) {
+    final node = DiagramNode(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      type: nodeType,
+      position: Offset(
+        (MediaQuery.of(context).size.width / 2 - panOffset.dx) / currentScale,
+        (MediaQuery.of(context).size.height / 2 - panOffset.dy) / currentScale,
+      ),
+    );
+
+    setState(() {
+      nodes.add(node);
+      selectedNode = node;
+      _hasUnsavedChanges = true;
+    });
+
+    // Mostrar diálogo para editar el nodo recién creado
+    _editSelectedNode();
+  }
+
+  void _createConnection(DiagramNode source, DiagramNode target) {
+    // No crear conexión si es el mismo nodo
+    if (source == target) {
+      _showSnackBar('No se puede conectar un nodo consigo mismo');
+      return;
+    }
+
+    // Verificar que la conexión sea válida según el tipo de nodo
+    if (_isValidConnection(source, target)) {
+      final connection = Connection(source: source, target: target, label: '');
+
+      setState(() {
+        connections.add(connection);
+        _hasUnsavedChanges = true;
+      });
+    } else {
+      _showSnackBar('Conexión no válida');
+    }
+  }
+
+  bool _isValidConnection(DiagramNode source, DiagramNode target) {
+    // Un nodo final no puede tener salidas
+    if (source.type == NodeType.end) {
+      _showSnackBar('Un nodo de fin no puede tener conexiones de salida');
+      return false;
+    }
+
+    // Un nodo inicio no puede tener entradas
+    if (target.type == NodeType.start) {
+      _showSnackBar('Un nodo de inicio no puede tener conexiones de entrada');
+      return false;
+    }
+
+    // Evitar conexiones duplicadas
+    bool isDuplicate = connections.any(
+      (conn) => conn.source == source && conn.target == target,
+    );
+
+    if (isDuplicate) {
+      _showSnackBar('Esta conexión ya existe');
+      return false;
+    }
+
+    // Si pasó todas las validaciones, la conexión es válida
+    return true;
+  }
+
+  Future<void> _editSelectedNode() async {
+    if (selectedNode == null) return;
+
+    final String? result = await showDialog<String>(
+      context: context,
+      builder: (context) => NodeEditorDialog(node: selectedNode!),
+    );
+
+    if (result != null) {
+      setState(() {
+        selectedNode!.text = result;
+        _hasUnsavedChanges = true;
+      });
+    }
+  }
+
+  void _deleteSelectedNode() {
+    if (selectedNode == null) return;
+
+    // Eliminar también todas las conexiones relacionadas con este nodo
+    setState(() {
+      connections.removeWhere(
+        (connection) =>
+            connection.source == selectedNode ||
+            connection.target == selectedNode,
+      );
+
+      nodes.remove(selectedNode);
+      selectedNode = null;
+      _hasUnsavedChanges = true;
+    });
+  }
+
+  void _showSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), duration: const Duration(seconds: 2)),
+    );
+  }
+
+  // Método para validar el diagrama
+  void _validateDiagram() {
+    final ValidationResult result = DiagramValidator.validateDiagram(
+      nodes,
+      connections,
+    );
+    _showValidationDialog(result);
+  }
+
+  // Mostrar el diálogo con los resultados de la validación
+  void _showValidationDialog(ValidationResult result) {
+    showDialog(
+      context: context,
+      builder: (context) => ValidationResultDialog(result: result),
+    );
+  }
+
+  // Método para generar código
+  void _generateCode() {
+    // Primero validamos el diagrama
+    final validationResult = DiagramValidator.validateDiagram(
+      nodes,
+      connections,
+    );
+    if (!validationResult.isValid) {
+      // Si hay errores, mostramos el diálogo de validación
+      _showValidationDialog(validationResult);
+      return;
+    }
+
+    // Si el diagrama es válido, generamos el código en C
+    final code = CodeGenerator.generateCode(
+      nodes,
+      connections,
+      ProgrammingLanguage.c,
+    );
+    _showCodeDialog(code);
+  }
+
+  // Mostrar el diálogo con el código generado
+  void _showCodeDialog(String code) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Código C generado'),
+        content: SizedBox(
+          width: double.maxFinite,
+          height: MediaQuery.of(context).size.height * 0.6,
+          child: SingleChildScrollView(
+            child: SelectableText(
+              code,
+              style: const TextStyle(fontFamily: 'monospace', fontSize: 14),
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cerrar'),
+          ),
+          TextButton(
+            onPressed: () {
+              // Copiar el código al portapapeles
+              Clipboard.setData(ClipboardData(text: code));
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Código copiado al portapapeles'),
+                  duration: Duration(seconds: 2),
+                ),
+              );
+              Navigator.of(context).pop();
+            },
+            child: const Text('Copiar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Mostrar diálogo para guardar el diagrama
+  Future<void> _showSaveDiagramDialog() async {
+    final Map<String, dynamic>? result = await showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (context) => SaveDiagramDialog(
+        initialName: currentDiagram?.name,
+        initialDescription: currentDiagram?.description,
+        isUpdate: currentDiagram != null,
+      ),
+    );
+
+    if (result != null && mounted) {
+      final now = DateTime.now();
+
+      try {
+        if (currentDiagram == null) {
+          // Crear un nuevo diagrama
+          final newDiagram = SavedDiagram(
+            name: result['name'],
+            description: result['description'],
+            createdAt: now,
+            updatedAt: now,
+            nodes: nodes,
+            connections: connections,
+          );
+
+          final id = await _databaseService.saveDiagram(newDiagram);
+          setState(() {
+            currentDiagram = newDiagram.copyWith(id: id);
+            _hasUnsavedChanges = false;
+          });
+          _showSnackBar('Diagrama guardado correctamente');
+        } else {
+          // Actualizar diagrama existente
+          final updatedDiagram = currentDiagram!.copyWith(
+            name: result['name'],
+            description: result['description'],
+            updatedAt: now,
+            nodes: nodes,
+            connections: connections,
+          );
+
+          await _databaseService.updateDiagram(updatedDiagram);
+          setState(() {
+            currentDiagram = updatedDiagram;
+            _hasUnsavedChanges = false;
+          });
+          _showSnackBar('Diagrama actualizado correctamente');
+        }
+      } catch (e) {
+        _showSnackBar('Error al guardar: ${e.toString()}');
+      }
+    }
+  }
+
+  // Navegar a la pantalla de carga de diagramas
+  Future<void> _navigateToLoadDiagram(BuildContext context) async {
+    // Verificar si hay cambios sin guardar
+    if (_hasUnsavedChanges) {
+      final bool? shouldProceed = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Cambios sin guardar'),
+          content: const Text(
+            'Hay cambios sin guardar. ¿Deseas guardar antes de continuar?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('No guardar'),
+            ),
+            TextButton(
+              onPressed: () async {
+                Navigator.of(context).pop();
+                await _showSaveDiagramDialog();
+              },
+              child: const Text('Guardar'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(null),
+              child: const Text('Cancelar'),
+            ),
+          ],
+        ),
+      );
+
+      if (shouldProceed == null) {
+        return; // Operación cancelada
+      }
+
+      if (shouldProceed) {
+        // El usuario eligió guardar, esperamos a que termine
+        await _showSaveDiagramDialog();
+      }
+    }
+
+    // Ahora navegamos a la pantalla de carga
+    if (!mounted) return;
+
+    final result = await Navigator.push<SavedDiagram?>(
+      context,
+      MaterialPageRoute(builder: (context) => const LoadDiagramScreen()),
+    );
+
+    // Si se seleccionó un diagrama, cargarlo
+    if (result != null && mounted) {
+      _loadDiagram(result);
+    }
+  }
+}

@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">Diagrama de Flujo C</string>
+    <string name="action_settings">Configuración</string>
+    <string name="element_start">Inicio</string>
+    <string name="element_end">Fin</string>
+    <string name="element_variable">Variable</string>
+    <string name="element_conditional">Condicional</string>
+    <string name="connect">Conectar</string>
+    <string name="menu_clear">Limpiar Diagrama</string>
+    <string name="menu_sample">Diagrama de Ejemplo</string>
+</resources>
