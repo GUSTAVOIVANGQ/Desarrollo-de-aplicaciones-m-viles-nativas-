@@ -45,33 +45,14 @@ class _FlowDiagramCanvasState extends State<FlowDiagramCanvas> {
   Offset? dragStart;
   Offset? nodeDragStart;
   bool isLongPressing = false;
+  bool isSnappingEnabled = false;
 
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onScaleStart: _handleScaleStart,
-      onScaleUpdate: _handleScaleUpdate,
-      onScaleEnd: _handleScaleEnd,
-      onTapUp: _handleTapUp,
-      onLongPressStart: _handleLongPressStart,
-      onLongPressEnd: _handleLongPressEnd,
-      child: Container(
-        color: Colors.grey[100],
-        child: ClipRect(
-          child: CustomPaint(
-            painter: FlowDiagramPainter(
-              nodes: widget.nodes,
-              connections: widget.connections,
-              selectedNode: widget.selectedNode,
-              panOffset: widget.panOffset,
-              scale: widget.scale,
-            ),
-            child: Container(),
-          ),
-        ),
-      ),
-    );
+  Offset _applySnapping(Offset position) {
+    final snappedX = (position.dx / FlowDiagramPainter.gridSize).round() *
+        FlowDiagramPainter.gridSize;
+    final snappedY = (position.dy / FlowDiagramPainter.gridSize).round() *
+        FlowDiagramPainter.gridSize;
+    return Offset(snappedX, snappedY);
   }
 
   DiagramNode? _findNodeAtPosition(Offset position) {
@@ -90,73 +71,126 @@ class _FlowDiagramCanvasState extends State<FlowDiagramCanvas> {
     return null;
   }
 
-  void _handleScaleStart(ScaleStartDetails details) {
-    final node = _findNodeAtPosition(details.localFocalPoint);
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      // Usar onScaleStart/Update/End para manejar tanto arrastre como escala
+      onScaleStart: (details) {
+        final node = _findNodeAtPosition(details.localFocalPoint);
 
-    if (node != null) {
-      setState(() {
-        draggingNode = node;
-        dragStart = details.localFocalPoint;
-        nodeDragStart = node.position;
-      });
-    } else {
-      setState(() {
-        dragStart = details.localFocalPoint;
-      });
-    }
-  }
+        if (node != null) {
+          setState(() {
+            draggingNode = node;
+            dragStart = details.localFocalPoint;
+            nodeDragStart = node.position;
+          });
+        } else {
+          setState(() {
+            dragStart = details.localFocalPoint;
+          });
+        }
+      },
 
-  void _handleScaleUpdate(ScaleUpdateDetails details) {
-    if (draggingNode != null &&
-        dragStart != null &&
-        nodeDragStart != null &&
-        !isLongPressing) {
-      final delta = (details.localFocalPoint - dragStart!) / widget.scale;
-      final newPosition = nodeDragStart! + delta;
-      widget.onNodeDragUpdate(draggingNode!, newPosition);
-    } else if (details.scale == 1.0 && !isLongPressing) {
-      widget.onPanUpdate(
-        DragUpdateDetails(
-          globalPosition: details.localFocalPoint,
-          delta: details.focalPointDelta,
+      onScaleUpdate: (details) {
+        if (draggingNode != null &&
+            dragStart != null &&
+            nodeDragStart != null &&
+            !isLongPressing) {
+          // Si estamos arrastrando un nodo
+          final rawDelta = details.localFocalPoint - dragStart!;
+          final adjustedDelta = rawDelta / widget.scale;
+
+          // Calcular nueva posición
+          final newPosition = nodeDragStart! + adjustedDelta;
+
+          // Actualizar posición directamente
+          draggingNode!.position = newPosition;
+
+          // Forzar redibujado sin reconstruir el widget tree
+          context.findRenderObject()?.markNeedsPaint();
+
+          // Notificar al padre del cambio
+          widget.onNodeDragUpdate(draggingNode!, newPosition);
+        } else if (details.scale != 1.0 && !isLongPressing) {
+          // Si estamos haciendo zoom
+          widget.onScaleUpdate(details);
+        } else if (!isLongPressing && details.scale == 1.0) {
+          // Si estamos moviendo el canvas (pan)
+          widget.onPanUpdate(
+            DragUpdateDetails(
+              globalPosition: details.localFocalPoint,
+              delta: details.focalPointDelta,
+            ),
+          );
+        }
+      },
+
+      onScaleEnd: (details) {
+        if (draggingNode != null) {
+          // Aplicar ajuste a cuadrícula si está habilitado
+          if (isSnappingEnabled) {
+            final snappedPosition = _applySnapping(draggingNode!.position);
+            if (snappedPosition != draggingNode!.position) {
+              widget.onNodeDragUpdate(draggingNode!, snappedPosition);
+            }
+          }
+
+          // Limpiar estado
+          setState(() {
+            draggingNode = null;
+            dragStart = null;
+            nodeDragStart = null;
+          });
+        }
+      },
+
+      onLongPress: () {
+        // Para iniciar conexión entre nodos
+        if (dragStart != null) {
+          final node = _findNodeAtPosition(dragStart!);
+          if (node != null) {
+            setState(() {
+              isLongPressing = true;
+            });
+            widget.onNodeLongPress(node);
+          }
+        }
+      },
+
+      onLongPressEnd: (details) {
+        setState(() {
+          isLongPressing = false;
+        });
+      },
+
+      onTap: () {
+        // Para seleccionar un nodo
+        if (!isLongPressing && dragStart != null) {
+          final node = _findNodeAtPosition(dragStart!);
+          if (node != null) {
+            widget.onNodeTap(node);
+          }
+        }
+      },
+
+      child: Container(
+        color: Colors.grey[100],
+        child: ClipRect(
+          child: CustomPaint(
+            painter: FlowDiagramPainter(
+              nodes: widget.nodes,
+              connections: widget.connections,
+              selectedNode: widget.selectedNode,
+              draggingNode: draggingNode,
+              panOffset: widget.panOffset,
+              scale: widget.scale,
+            ),
+            child: Container(),
+          ),
         ),
-      );
-    } else if (!isLongPressing) {
-      widget.onScaleUpdate(details);
-    }
-  }
-
-  void _handleScaleEnd(ScaleEndDetails details) {
-    setState(() {
-      draggingNode = null;
-      dragStart = null;
-      nodeDragStart = null;
-    });
-  }
-
-  void _handleTapUp(TapUpDetails details) {
-    if (draggingNode == null && !isLongPressing) {
-      final node = _findNodeAtPosition(details.localPosition);
-      if (node != null) {
-        widget.onNodeTap(node);
-      }
-    }
-  }
-
-  void _handleLongPressStart(LongPressStartDetails details) {
-    final node = _findNodeAtPosition(details.localPosition);
-    if (node != null) {
-      setState(() {
-        isLongPressing = true;
-      });
-      widget.onNodeLongPress(node);
-    }
-  }
-
-  void _handleLongPressEnd(LongPressEndDetails details) {
-    setState(() {
-      isLongPressing = false;
-    });
+      ),
+    );
   }
 }
 
@@ -164,40 +198,41 @@ class FlowDiagramPainter extends CustomPainter {
   final List<DiagramNode> nodes;
   final List<Connection> connections;
   final DiagramNode? selectedNode;
+  final DiagramNode? draggingNode;
   final Offset panOffset;
   final double scale;
 
   static const gridSize = 20.0;
   static const arrowSize = 10.0;
 
-  final Paint gridPaint =
-      Paint()
-        ..color = Colors.grey.withOpacity(0.2)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.0;
+  final Paint gridPaint = Paint()
+    ..color = Colors.grey.withOpacity(0.2)
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 1.0;
 
-  final Paint nodeFillPaint =
-      Paint()
-        ..color = Colors.white
-        ..style = PaintingStyle.fill;
+  final Paint nodeFillPaint = Paint()
+    ..color = Colors.white
+    ..style = PaintingStyle.fill;
 
-  final Paint nodeStrokePaint =
-      Paint()
-        ..color = Colors.black
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.5;
+  final Paint nodeStrokePaint = Paint()
+    ..color = Colors.black
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 1.5;
 
-  final Paint selectedNodePaint =
-      Paint()
-        ..color = Colors.blue
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 2.5;
+  final Paint selectedNodePaint = Paint()
+    ..color = Colors.blue
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 2.5;
 
-  final Paint connectionPaint =
-      Paint()
-        ..color = Colors.black
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.5;
+  final Paint draggingNodePaint = Paint()
+    ..color = Colors.blue.withOpacity(0.7)
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 2.0;
+
+  final Paint connectionPaint = Paint()
+    ..color = Colors.black
+    ..style = PaintingStyle.stroke
+    ..strokeWidth = 1.5;
 
   final TextStyle nodeTextStyle = const TextStyle(
     fontSize: 14,
@@ -208,6 +243,7 @@ class FlowDiagramPainter extends CustomPainter {
     required this.nodes,
     required this.connections,
     this.selectedNode,
+    this.draggingNode,
     required this.panOffset,
     required this.scale,
   });
@@ -226,7 +262,10 @@ class FlowDiagramPainter extends CustomPainter {
     }
 
     for (final node in nodes) {
-      _drawNode(canvas, node, node == selectedNode);
+      final bool isSelected = node == selectedNode;
+      final bool isDragging = node == draggingNode;
+
+      _drawNode(canvas, node, isSelected, isDragging);
     }
 
     canvas.restore();
@@ -261,15 +300,26 @@ class FlowDiagramPainter extends CustomPainter {
     }
   }
 
-  void _drawNode(Canvas canvas, DiagramNode node, bool isSelected) {
+  void _drawNode(
+      Canvas canvas, DiagramNode node, bool isSelected, bool isDragging) {
     canvas.save();
 
     canvas.translate(node.position.dx, node.position.dy);
 
     final path = node.getPath();
 
-    canvas.drawPath(path, nodeFillPaint);
-    canvas.drawPath(path, isSelected ? selectedNodePaint : nodeStrokePaint);
+    if (isDragging) {
+      final shadowPaint = Paint()
+        ..color = Colors.black.withOpacity(0.2)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4.0);
+
+      canvas.drawPath(path, shadowPaint);
+      canvas.drawPath(path, nodeFillPaint);
+      canvas.drawPath(path, draggingNodePaint);
+    } else {
+      canvas.drawPath(path, nodeFillPaint);
+      canvas.drawPath(path, isSelected ? selectedNodePaint : nodeStrokePaint);
+    }
 
     final textSpan = TextSpan(
       text: node.text.isEmpty ? _getDefaultNodeText(node.type) : node.text,
@@ -348,26 +398,23 @@ class FlowDiagramPainter extends CustomPainter {
 
     final angle = math.atan2(direction.dy, direction.dx);
 
-    final p1 =
-        tip -
+    final p1 = tip -
         Offset(
           arrowSize * math.cos(angle - math.pi / 6),
           arrowSize * math.sin(angle - math.pi / 6),
         );
 
-    final p2 =
-        tip -
+    final p2 = tip -
         Offset(
           arrowSize * math.cos(angle + math.pi / 6),
           arrowSize * math.sin(angle + math.pi / 6),
         );
 
-    final arrowPath =
-        Path()
-          ..moveTo(tip.dx, tip.dy)
-          ..lineTo(p1.dx, p1.dy)
-          ..lineTo(p2.dx, p2.dy)
-          ..close();
+    final arrowPath = Path()
+      ..moveTo(tip.dx, tip.dy)
+      ..lineTo(p1.dx, p1.dy)
+      ..lineTo(p2.dx, p2.dy)
+      ..close();
 
     canvas.drawPath(arrowPath, connectionPaint);
   }
@@ -396,6 +443,7 @@ class FlowDiagramPainter extends CustomPainter {
     return oldDelegate.nodes != nodes ||
         oldDelegate.connections != connections ||
         oldDelegate.selectedNode != selectedNode ||
+        oldDelegate.draggingNode != draggingNode ||
         oldDelegate.panOffset != panOffset ||
         oldDelegate.scale != scale;
   }

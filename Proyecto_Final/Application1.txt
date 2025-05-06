@@ -1,0 +1,3 @@
+Estoy realizando Pruebas para verificar la estabilidad del editor.
+Hay un problema cuando intento crear conexiones entre nodos despues se abre la pantalla de LoadDiagramScreen la aplicacion y aparecen 2 mensajes que dice "Conexion no valida" y depues "Conexion creada".   
+Hay un problema. Intento borrar las conexiones entre nodos pero es poco intuitivo. ¿Puedes ayudarme con el problema?
