@@ -21,6 +21,7 @@ class FlowDiagramCanvas extends StatefulWidget {
   final Function(DiagramNode) onNodeTap;
   final Function(DiagramNode) onNodeLongPress;
   final Function(DiagramNode, Offset) onNodeDragUpdate;
+  final Function(Connection)? onConnectionTap;
 
   const FlowDiagramCanvas({
     super.key,
@@ -34,6 +35,7 @@ class FlowDiagramCanvas extends StatefulWidget {
     required this.onNodeTap,
     required this.onNodeLongPress,
     required this.onNodeDragUpdate,
+    this.onConnectionTap,
   });
 
   @override
@@ -69,6 +71,51 @@ class _FlowDiagramCanvasState extends State<FlowDiagramCanvas> {
       }
     }
     return null;
+  }
+
+  Connection? _findConnectionAtPosition(Offset position) {
+    final localPosition = position - widget.panOffset;
+    final scaledPosition = Offset(
+      localPosition.dx / widget.scale,
+      localPosition.dy / widget.scale,
+    );
+
+    const double hitDistance = 10.0;
+
+    for (final connection in widget.connections) {
+      final points = connection.getConnectionPoints();
+      if (points.length < 2) continue;
+
+      final start = points[0];
+      final end = points[1];
+
+      final distance = _distanceToLine(scaledPosition, start, end);
+
+      if (distance < hitDistance) {
+        return connection;
+      }
+    }
+
+    return null;
+  }
+
+  double _distanceToLine(Offset point, Offset lineStart, Offset lineEnd) {
+    final double lineLength = (lineEnd - lineStart).distance;
+    if (lineLength == 0) return double.infinity;
+
+    final double t = ((point.dx - lineStart.dx) * (lineEnd.dx - lineStart.dx) +
+            (point.dy - lineStart.dy) * (lineEnd.dy - lineStart.dy)) /
+        (lineLength * lineLength);
+
+    if (t < 0) return (point - lineStart).distance;
+    if (t > 1) return (point - lineEnd).distance;
+
+    final projection = Offset(
+      lineStart.dx + t * (lineEnd.dx - lineStart.dx),
+      lineStart.dy + t * (lineEnd.dy - lineStart.dy),
+    );
+
+    return (point - projection).distance;
   }
 
   @override
@@ -165,11 +212,16 @@ class _FlowDiagramCanvasState extends State<FlowDiagramCanvas> {
       },
 
       onTap: () {
-        // Para seleccionar un nodo
+        // Para seleccionar un nodo o conexión
         if (!isLongPressing && dragStart != null) {
           final node = _findNodeAtPosition(dragStart!);
           if (node != null) {
             widget.onNodeTap(node);
+          } else {
+            final connection = _findConnectionAtPosition(dragStart!);
+            if (connection != null && widget.onConnectionTap != null) {
+              widget.onConnectionTap!(connection);
+            }
           }
         }
       },

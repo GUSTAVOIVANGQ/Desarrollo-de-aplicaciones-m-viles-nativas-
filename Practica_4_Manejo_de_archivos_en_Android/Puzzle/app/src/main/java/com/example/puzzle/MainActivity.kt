@@ -199,6 +199,9 @@ class MainActivity : AppCompatActivity() {
         // Pause the game timer when the app is paused
         isGameActive = false
         handler.removeCallbacks(timerRunnable)
+        
+        // Stop light sensor monitoring to save battery
+        themeManager.stopLightMonitoring()
     }
 
     override fun onResume() {
@@ -208,6 +211,9 @@ class MainActivity : AppCompatActivity() {
             isGameActive = true
             handler.post(timerRunnable)
         }
+        
+        // Start light sensor monitoring if auto mode is enabled
+        themeManager.startLightMonitoring()
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -243,6 +249,10 @@ class MainActivity : AppCompatActivity() {
             }
             R.id.action_theme -> {
                 showThemeDialog()
+                true
+            }
+            R.id.action_light_sensor -> {
+                showLightSensorDialog()
                 true
             }
             else -> super.onOptionsItemSelected(item)
@@ -589,46 +599,201 @@ class MainActivity : AppCompatActivity() {
      * Shows a dialog for selecting the application theme
      */
     private fun showThemeDialog() {
-        val themes = arrayOf(
-            getString(R.string.theme_guinda),
-            getString(R.string.theme_azul)
-        )
+        // Create a custom view with radio buttons for themes and a checkbox for auto mode
+        val view = layoutInflater.inflate(R.layout.dialog_theme_settings, null)
+        val radioGuinda = view.findViewById<android.widget.RadioButton>(R.id.radio_theme_guinda)
+        val radioAzul = view.findViewById<android.widget.RadioButton>(R.id.radio_theme_azul)
+        val checkboxAutoMode = view.findViewById<android.widget.CheckBox>(R.id.checkbox_auto_dark_mode)
+        val sensorInfoText = view.findViewById<TextView>(R.id.sensor_info_text)
         
+        // Set current values
         val currentTheme = themeManager.getCurrentTheme()
-        val currentSelection = when (currentTheme) {
-            ThemeManager.THEME_GUINDA -> 0
-            ThemeManager.THEME_AZUL -> 1
-            else -> 1
+        when (currentTheme) {
+            ThemeManager.THEME_GUINDA -> radioGuinda.isChecked = true
+            ThemeManager.THEME_AZUL -> radioAzul.isChecked = true
         }
         
-        AlertDialog.Builder(this)
+        // Set auto dark mode checkbox
+        checkboxAutoMode.isChecked = themeManager.isAutoDarkModeEnabled()
+        
+        // Show current light sensor value if available
+        val luxReading = themeManager.getLastLuxReading()
+        val lightLevel = themeManager.getCurrentLightLevel().toString()
+        if (luxReading >= 0) {
+            sensorInfoText.text = "Current light: $luxReading lux ($lightLevel)"
+            sensorInfoText.visibility = View.VISIBLE
+        } else {
+            sensorInfoText.visibility = View.GONE
+        }
+        
+        val dialog = AlertDialog.Builder(this)
             .setTitle(R.string.dialog_title_theme)
-            .setSingleChoiceItems(themes, currentSelection) { dialog, which ->
-                val newTheme = when (which) {
-                    0 -> ThemeManager.THEME_GUINDA
-                    1 -> ThemeManager.THEME_AZUL
-                    else -> ThemeManager.THEME_AZUL
+            .setView(view)
+            .setPositiveButton(R.string.btn_apply) { _, _ ->
+                // Apply theme change if needed
+                val newTheme = if (radioGuinda.isChecked) {
+                    ThemeManager.THEME_GUINDA
+                } else {
+                    ThemeManager.THEME_AZUL
                 }
                 
                 if (newTheme != currentTheme) {
                     themeManager.setTheme(newTheme)
                     
                     // Show toast informing the user of the theme change
-                    val themeName = if (which == 0) getString(R.string.theme_guinda) else getString(R.string.theme_azul)
+                    val themeName = if (radioGuinda.isChecked) getString(R.string.theme_guinda) else getString(R.string.theme_azul)
                     Toast.makeText(
                         this,
                         getString(R.string.theme_changed, themeName),
                         Toast.LENGTH_SHORT
                     ).show()
-                    
-                    // Recreate the activity to apply the new theme
-                    recreate()
                 }
                 
-                dialog.dismiss()
+                // Apply auto dark mode setting
+                val autoModeEnabled = checkboxAutoMode.isChecked
+                if (autoModeEnabled != themeManager.isAutoDarkModeEnabled()) {
+                    themeManager.setAutoDarkModeEnabled(autoModeEnabled)
+                    
+                    // Show toast about auto mode
+                    val message = if (autoModeEnabled) {
+                        "Auto dark mode enabled based on ambient light"
+                    } else {
+                        "Auto dark mode disabled"
+                    }
+                    Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+                }
+                
+                // Recreate the activity to apply the new theme
+                recreate()
             }
             .setNegativeButton(R.string.btn_cancel, null)
-            .show()
+            .create()
+            
+        dialog.show()
+    }
+    
+    /**
+     * Shows a dialog for configuring the light sensor settings
+     */
+    private fun showLightSensorDialog() {
+        // Create a custom view with light sensor settings
+        val view = layoutInflater.inflate(R.layout.dialog_light_sensor_settings, null)
+        
+        // Get reference to UI elements
+        val enableSensorCheckbox = view.findViewById<android.widget.CheckBox>(R.id.checkbox_enable_light_sensor)
+        val autoDarkModeCheckbox = view.findViewById<android.widget.CheckBox>(R.id.checkbox_auto_dark_mode)
+        val lightThresholdSeekbar = view.findViewById<android.widget.SeekBar>(R.id.seekbar_light_threshold)
+        val thresholdValueText = view.findViewById<TextView>(R.id.text_threshold_value)
+        val currentLuxText = view.findViewById<TextView>(R.id.text_current_lux)
+        val currentModeText = view.findViewById<TextView>(R.id.text_current_mode)
+        val settingsLayout = view.findViewById<android.view.View>(R.id.light_sensor_settings)
+        
+        // Set initial values
+        val isAutoModeEnabled = themeManager.isAutoDarkModeEnabled()
+        enableSensorCheckbox.isChecked = isAutoModeEnabled
+        autoDarkModeCheckbox.isChecked = isAutoModeEnabled
+        settingsLayout.visibility = if (isAutoModeEnabled) View.VISIBLE else View.GONE
+        
+        // Get the current threshold value (if implemented)
+        // Default to 50 for now - in a real app you would save this in preferences
+        val currentThreshold = 50
+        lightThresholdSeekbar.progress = currentThreshold
+        thresholdValueText.text = getString(R.string.light_threshold_value, currentThreshold)
+        
+        // Get the current light level
+        val luxReading = themeManager.getLastLuxReading()
+        currentLuxText.text = if (luxReading >= 0) "$luxReading lux" else "Sensor unavailable"
+        
+        // Set the current mode text
+        currentModeText.text = if (themeManager.isDarkModeEnabled()) {
+            getString(R.string.mode_dark)
+        } else {
+            getString(R.string.mode_light)
+        }
+        
+        // Set up checkbox listener for enabling/disabling all settings
+        enableSensorCheckbox.setOnCheckedChangeListener { _, isChecked ->
+            settingsLayout.visibility = if (isChecked) View.VISIBLE else View.GONE
+        }
+        
+        // Set up seekbar listener
+        lightThresholdSeekbar.setOnSeekBarChangeListener(object : android.widget.SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: android.widget.SeekBar?, progress: Int, fromUser: Boolean) {
+                thresholdValueText.text = getString(R.string.light_threshold_value, progress)
+            }
+            
+            override fun onStartTrackingTouch(seekBar: android.widget.SeekBar?) {}
+            
+            override fun onStopTrackingTouch(seekBar: android.widget.SeekBar?) {}
+        })
+        
+        // Set up handler to update readings
+        val handler = Handler(Looper.getMainLooper())
+        var sensorUpdateRunnable: Runnable? = null
+        
+        // Create a dialog builder
+        val dialog = AlertDialog.Builder(this)
+            .setTitle(R.string.menu_light_sensor)
+            .setView(view)
+            .setPositiveButton(R.string.btn_apply) { _, _ ->
+                // Save settings
+                val enabled = enableSensorCheckbox.isChecked
+                themeManager.setAutoDarkModeEnabled(enabled)
+                
+                // TODO: Save threshold value in a shared preference
+                
+                Toast.makeText(
+                    this, 
+                    if (enabled) R.string.msg_auto_mode_enabled else R.string.msg_auto_mode_disabled, 
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+            .setNegativeButton(R.string.btn_cancel, null)
+            .create()
+        
+        // Create a runnable to update sensor readings while dialog is visible
+        sensorUpdateRunnable = object : Runnable {
+            override fun run() {
+                if (dialog.isShowing) {
+                    // Update lux reading
+                    val luxReading = themeManager.getLastLuxReading()
+                    if (luxReading >= 0) {
+                        currentLuxText.text = "$luxReading lux"
+                    }
+                    
+                    // Update current mode
+                    currentModeText.text = if (themeManager.isDarkModeEnabled()) {
+                        getString(R.string.mode_dark)
+                    } else {
+                        getString(R.string.mode_light)
+                    }
+                    
+                    // Schedule next update
+                    handler.postDelayed(this, 1000)
+                }
+            }
+        }
+        
+        // Start monitoring when the dialog is shown
+        dialog.setOnShowListener {
+            // Start sensor monitoring
+            themeManager.startLightMonitoring()
+            
+            // Start updating the UI
+            handler.post(sensorUpdateRunnable!!)
+        }
+        
+        // Stop monitoring when the dialog is dismissed
+        dialog.setOnDismissListener {
+            handler.removeCallbacks(sensorUpdateRunnable!!)
+            
+            // If auto mode isn't enabled, stop monitoring
+            if (!themeManager.isAutoDarkModeEnabled()) {
+                themeManager.stopLightMonitoring()
+            }
+        }
+        
+        dialog.show()
     }
     
     /**

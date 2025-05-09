@@ -25,6 +25,7 @@ class _EditorScreenState extends State<EditorScreen> {
   final List<DiagramNode> nodes = [];
   final List<Connection> connections = [];
   DiagramNode? selectedNode;
+  Connection? selectedConnection; // Nueva propiedad para conexión seleccionada
   DiagramNode? connectionStart;
   Offset panOffset = Offset.zero;
   double currentScale = 1.0;
@@ -107,6 +108,27 @@ class _EditorScreenState extends State<EditorScreen> {
               tooltip: 'Eliminar nodo',
               onPressed: () => _deleteSelectedNode(),
             ),
+          // Nuevo botón para gestionar conexiones
+          if (selectedNode != null)
+            IconButton(
+              icon: isConnecting
+                  ? const Icon(Icons.link_off)
+                  : const Icon(Icons.link),
+              tooltip: isConnecting ? 'Cancelar conexión' : 'Crear conexión',
+              onPressed: () {
+                setState(() {
+                  if (isConnecting) {
+                    connectionStart = null;
+                    isConnecting = false;
+                    _showSnackBar('Conexión cancelada');
+                  } else {
+                    connectionStart = selectedNode;
+                    isConnecting = true;
+                    _showSnackBar('Selecciona otro nodo para conectarlo');
+                  }
+                });
+              },
+            ),
         ],
       ),
       body: Row(
@@ -114,7 +136,8 @@ class _EditorScreenState extends State<EditorScreen> {
           // Panel lateral con la paleta de nodos
           NodePalette(
             onNodeSelected: (nodeType) {
-              _addNode(nodeType);
+              // No seleccionar automáticamente el nodo si estamos en modo conexión
+              _addNode(nodeType, autoSelect: !isConnecting);
             },
           ),
 
@@ -144,28 +167,49 @@ class _EditorScreenState extends State<EditorScreen> {
                   },
                   onNodeTap: (node) {
                     setState(() {
-                      if (connectionStart != null) {
-                        // Crear conexión entre nodos
-                        _createConnection(connectionStart!, node);
-                        connectionStart = null;
-                        isConnecting = false;
-                        _showSnackBar('Conexión creada');
+                      if (isConnecting && connectionStart != null) {
+                        // Si estamos en modo conexión y ya tenemos un nodo de origen,
+                        // este tap es para seleccionar el nodo destino y crear la conexión
+                        if (connectionStart != node) {
+                          // Evitar conectar un nodo consigo mismo
+                          _createConnection(connectionStart!, node);
+                          // Después de crear la conexión, salimos del modo conexión
+                          isConnecting = false;
+                          connectionStart = null;
+                        } else {
+                          _showSnackBar(
+                              'No puedes conectar un nodo consigo mismo');
+                        }
                       } else {
+                        // Si no estamos en modo conexión, simplemente seleccionamos el nodo
                         selectedNode = node;
+                        selectedConnection =
+                            null; // Deseleccionar cualquier conexión
                       }
                     });
                   },
                   onNodeLongPress: (node) {
                     setState(() {
-                      connectionStart = node;
-                      isConnecting = true;
-                      _showSnackBar('Selecciona otro nodo para conectarlos');
+                      // Solo iniciar conexión si no estamos ya en ese modo
+                      if (!isConnecting) {
+                        connectionStart = node;
+                        selectedNode = node;
+                        isConnecting = true;
+                        _showSnackBar('Selecciona otro nodo para conectarlos');
+                      }
                     });
                   },
                   onNodeDragUpdate: (node, offset) {
                     setState(() {
                       node.position = offset;
                       _hasUnsavedChanges = true;
+                    });
+                  },
+                  onConnectionTap: (connection) {
+                    setState(() {
+                      selectedConnection = connection;
+                      selectedNode = null; // Deseleccionar cualquier nodo
+                      _showConnectionOptionsDialog(connection);
                     });
                   },
                 ),
@@ -204,16 +248,7 @@ class _EditorScreenState extends State<EditorScreen> {
       floatingActionButton: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (selectedNode != null)
-            FloatingActionButton(
-              onPressed: _editSelectedNode,
-              heroTag: 'edit',
-              mini: true,
-              tooltip: 'Editar nodo',
-              child: const Icon(Icons.edit),
-            ),
-          const SizedBox(height: 8),
-          if (connectionStart != null)
+          if (isConnecting)
             FloatingActionButton(
               onPressed: () {
                 setState(() {
@@ -280,7 +315,7 @@ class _EditorScreenState extends State<EditorScreen> {
     }
   }
 
-  void _addNode(NodeType nodeType) {
+  void _addNode(NodeType nodeType, {bool autoSelect = true}) {
     final node = DiagramNode(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       type: nodeType,
@@ -292,7 +327,9 @@ class _EditorScreenState extends State<EditorScreen> {
 
     setState(() {
       nodes.add(node);
-      selectedNode = node;
+      if (autoSelect) {
+        selectedNode = node;
+      }
       _hasUnsavedChanges = true;
     });
 
@@ -304,20 +341,108 @@ class _EditorScreenState extends State<EditorScreen> {
     // No crear conexión si es el mismo nodo
     if (source == target) {
       _showSnackBar('No se puede conectar un nodo consigo mismo');
+      connectionStart = null;
+      isConnecting = false;
       return;
     }
 
     // Verificar que la conexión sea válida según el tipo de nodo
     if (_isValidConnection(source, target)) {
-      final connection = Connection(source: source, target: target, label: '');
+      // Establecer etiqueta predeterminada según el tipo de nodo
+      String defaultLabel = '';
 
+      // Si el nodo fuente es una decisión, mostrar diálogo para elegir etiqueta
+      if (source.type == NodeType.decision) {
+        _showConnectionLabelDialog(source, target);
+      } else {
+        final connection =
+            Connection(source: source, target: target, label: defaultLabel);
+        setState(() {
+          connections.add(connection);
+          _hasUnsavedChanges = true;
+          connectionStart = null;
+          isConnecting = false;
+        });
+        _showSnackBar('Conexión creada');
+      }
+    } else {
+      setState(() {
+        connectionStart = null;
+        isConnecting = false;
+      });
+    }
+  }
+
+  // Diálogo para editar la etiqueta de una conexión
+  Future<void> _showConnectionLabelDialog(
+      DiagramNode source, DiagramNode target) async {
+    final TextEditingController labelController = TextEditingController();
+
+    // Establecer etiqueta predeterminada para nodos de decisión
+    if (source.type == NodeType.decision) {
+      // Verificar si ya hay otras conexiones desde este nodo de decisión
+      final existingConnections =
+          connections.where((c) => c.source == source).toList();
+      if (existingConnections.isEmpty) {
+        // Primera conexión, sugerimos "Sí" como etiqueta
+        labelController.text = "Sí";
+      } else if (existingConnections.length == 1) {
+        // Segunda conexión, sugerimos "No" como etiqueta
+        labelController.text = "No";
+      }
+    }
+
+    final String? label = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Etiqueta de conexión'),
+        content: TextField(
+          controller: labelController,
+          decoration: const InputDecoration(
+            labelText: 'Etiqueta',
+            hintText: 'ej: Sí, No, Verdadero, Falso',
+          ),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(null),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(labelController.text),
+            child: const Text('Guardar'),
+          ),
+        ],
+      ),
+    );
+
+    if (label != null) {
+      final connection =
+          Connection(source: source, target: target, label: label);
       setState(() {
         connections.add(connection);
         _hasUnsavedChanges = true;
+        connectionStart = null;
+        isConnecting = false;
       });
+      _showSnackBar('Conexión creada con etiqueta "$label"');
     } else {
-      _showSnackBar('Conexión no válida');
+      // Si se canceló el diálogo, cancelar la creación de la conexión
+      setState(() {
+        connectionStart = null;
+        isConnecting = false;
+      });
     }
+  }
+
+  // Método para eliminar una conexión seleccionada
+  void _deleteConnection(Connection connection) {
+    setState(() {
+      connections.remove(connection);
+      _hasUnsavedChanges = true;
+    });
+    _showSnackBar('Conexión eliminada');
   }
 
   bool _isValidConnection(DiagramNode source, DiagramNode target) {
@@ -384,6 +509,79 @@ class _EditorScreenState extends State<EditorScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), duration: const Duration(seconds: 2)),
     );
+  }
+
+  // Mostrar diálogo de opciones para editar o eliminar una conexión
+  Future<void> _showConnectionOptionsDialog(Connection connection) async {
+    final result = await showDialog<String>(
+      context: context,
+      builder: (context) => SimpleDialog(
+        title: const Text('Opciones de conexión'),
+        children: [
+          ListTile(
+            leading: const Icon(Icons.edit),
+            title: const Text('Editar etiqueta'),
+            onTap: () => Navigator.of(context).pop('edit'),
+          ),
+          ListTile(
+            leading: const Icon(Icons.delete, color: Colors.red),
+            title: const Text('Eliminar conexión'),
+            onTap: () => Navigator.of(context).pop('delete'),
+          ),
+          ListTile(
+            leading: const Icon(Icons.close),
+            title: const Text('Cancelar'),
+            onTap: () => Navigator.of(context).pop('cancel'),
+          ),
+        ],
+      ),
+    );
+
+    if (result == 'edit') {
+      _editConnectionLabel(connection);
+    } else if (result == 'delete') {
+      _deleteConnection(connection);
+      selectedConnection = null;
+    }
+  }
+
+  // Mostrar diálogo para editar la etiqueta de una conexión existente
+  Future<void> _editConnectionLabel(Connection connection) async {
+    final TextEditingController labelController =
+        TextEditingController(text: connection.label);
+
+    final String? newLabel = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Editar etiqueta de conexión'),
+        content: TextField(
+          controller: labelController,
+          decoration: const InputDecoration(
+            labelText: 'Etiqueta',
+            hintText: 'ej: Sí, No, Verdadero, Falso',
+          ),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(null),
+            child: const Text('Cancelar'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(labelController.text),
+            child: const Text('Actualizar'),
+          ),
+        ],
+      ),
+    );
+
+    if (newLabel != null) {
+      setState(() {
+        connection.label = newLabel;
+        _hasUnsavedChanges = true;
+      });
+      _showSnackBar('Etiqueta de conexión actualizada');
+    }
   }
 
   // Método para validar el diagrama

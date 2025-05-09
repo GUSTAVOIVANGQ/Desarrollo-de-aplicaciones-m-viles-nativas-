@@ -37,6 +37,10 @@
                 android:title="@string/menu_theme" />
                 
             <item
+                android:id="@+id/action_light_sensor"
+                android:title="@string/menu_light_sensor" />
+                
+            <item
                 android:id="@+id/action_save_format"
                 android:title="@string/menu_save_format" />
         </menu>
