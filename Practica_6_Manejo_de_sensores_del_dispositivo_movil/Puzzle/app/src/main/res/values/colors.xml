@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Base colors -->
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="transparent">#00000000</color>
+    
+    <!-- IPN Guinda Theme - Light Mode -->
+    <color name="ipn_primary">#8A0F1D</color>       <!-- Main Guinda color -->
+    <color name="ipn_primary_variant">#630A15</color> <!-- Darker Guinda -->
+    <color name="ipn_secondary">#CD9700</color>     <!-- Gold accent color -->
+    <color name="ipn_surface">#F8F2F2</color>       <!-- Light background -->
+    <color name="ipn_background">#FFFFFF</color>    <!-- White background -->
+    <color name="ipn_error">#B00020</color>         <!-- Error color -->
+    <color name="ipn_on_primary">#FFFFFF</color>    <!-- Text on primary -->
+    <color name="ipn_on_secondary">#000000</color>  <!-- Text on secondary -->
+    <color name="ipn_on_background">#000000</color> <!-- Text on background -->
+    <color name="ipn_on_surface">#000000</color>    <!-- Text on surface -->
+    <color name="ipn_on_error">#FFFFFF</color>      <!-- Text on error -->
+    <color name="ipn_tile">#8A0F1D</color>          <!-- Tile color -->
+    <color name="ipn_tile_correct">#CD9700</color>  <!-- Correct tile color -->
+    
+    <!-- ESCOM Azul Theme - Light Mode -->
+    <color name="escom_primary">#003B5C</color>      <!-- ESCOM Blue -->
+    <color name="escom_primary_variant">#002A41</color> <!-- Darker Blue -->
+    <color name="escom_secondary">#007EA7</color>   <!-- Lighter Blue accent -->
+    <color name="escom_surface">#F2F7FA</color>     <!-- Light background -->
+    <color name="escom_background">#FFFFFF</color>  <!-- White background -->
+    <color name="escom_error">#B00020</color>       <!-- Error color -->
+    <color name="escom_on_primary">#FFFFFF</color>  <!-- Text on primary -->
+    <color name="escom_on_secondary">#FFFFFF</color> <!-- Text on secondary -->
+    <color name="escom_on_background">#000000</color> <!-- Text on background -->
+    <color name="escom_on_surface">#000000</color>  <!-- Text on surface -->
+    <color name="escom_on_error">#FFFFFF</color>    <!-- Text on error -->
+    <color name="escom_tile">#003B5C</color>        <!-- Tile color -->
+    <color name="escom_tile_correct">#007EA7</color> <!-- Correct tile color -->
+</resources>
