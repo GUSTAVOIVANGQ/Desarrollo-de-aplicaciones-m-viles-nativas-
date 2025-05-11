@@ -14,6 +14,7 @@
     <string name="btn_cancel">Cancel</string>
     <string name="menu_new_game">New Game</string>
     <string name="menu_change_difficulty">Change Difficulty</string>
+    <string name="menu_multiplayer">Multiplayer</string>
     
     <!-- Game state persistence strings -->
     <string name="menu_save_game">Save Game</string>
@@ -74,4 +75,57 @@
     <string name="light_level_normal">Normal</string>
     <string name="light_level_bright">Bright</string>
     <string name="light_level_very_bright">Very Bright</string>
+    
+    <!-- Multiplayer strings -->
+    <string name="multiplayer_title">Bluetooth Multiplayer</string>
+    <string name="bluetooth_not_supported">Bluetooth is not supported on this device</string>
+    <string name="bluetooth_not_enabled">Bluetooth must be enabled to use multiplayer features</string>
+    <string name="bluetooth_permission_required">Bluetooth permissions are required for multiplayer</string>
+    <string name="bluetooth_ready">Ready for Bluetooth connection</string>
+    <string name="status_not_connected">Not connected</string>
+    <string name="status_scanning">Scanning for devices...</string>
+    <string name="status_connecting">Connecting...</string>
+    <string name="status_connected">Connected to %s</string>
+    <string name="status_listening">Listening for connections...</string>
+    <string name="no_devices_found">No devices found</string>
+    <string name="connection_established">Connection Established</string>
+    <string name="connection_lost">Connection lost</string>
+    <string name="select_role">Select your role:</string>
+    <string name="host_game">Host a new game</string>
+    <string name="join_game">Join a game</string>
+    <string name="select_game_mode">Select game mode:</string>
+    <string name="cooperative_mode">Cooperative (solve one puzzle together)</string>
+    <string name="competitive_mode">Competitive (race to solve puzzles)</string>
+    <string name="start_multiplayer_game_question">Start a multiplayer game with %s?</string>
+    <string name="connect_to_device">Connect to device</string>
+    <string name="confirm_connect_to_device">Connect to %s?</string>
+    <string name="btn_connect">Connect</string>
+    <string name="btn_start_game">Start Game</string>
+    <string name="btn_scan_again">Scan Again</string>
+    <string name="btn_start">Start</string>
+    <string name="btn_wait">Wait</string>
+    <string name="btn_exit">Exit</string>
+    <string name="start_discovery">Start Discovery</string>
+    <string name="your_puzzle">Your Puzzle</string>
+    <string name="opponent_puzzle">Opponent\'s Puzzle</string>
+    <string name="waiting_for_players">Waiting for players...</string>
+    <string name="waiting_for_opponent">Waiting for opponent...</string>
+    <string name="opponent_ready">Opponent is ready</string>
+    <string name="both_ready">Both players are ready</string>
+    <string name="both_players_ready">Both players ready</string>
+    <string name="start_game_question">Both players are ready. Start the game now?</string>
+    <string name="game_started">Game started!</string>
+    <string name="game_in_progress">Game in progress</string>
+    <string name="send_message_hint">Type a message...</string>
+    <string name="send_message">Send message</string>
+    <string name="btn_ready">I\'m Ready</string>
+    <string name="btn_not_ready">Not Ready</string>
+    <string name="opponent_won">Opponent Won!</string>
+    <string name="opponent_score">Your opponent completed the puzzle with a score of %d.</string>
+    <string name="puzzle_solved_together">Puzzle Solved Together!</string>
+    <string name="cooperative_win_message">You and your partner solved the puzzle together. Great teamwork!</string>
+    <string name="confirm_exit">Leave the game?</string>
+    <string name="confirm_exit_message">Are you sure you want to leave the game? This will disconnect from your opponent.</string>
+    <string name="competitive_mode_title">Competitive Mode</string>
+    <string name="cooperative_mode_title">Cooperative Mode</string>
 </resources>

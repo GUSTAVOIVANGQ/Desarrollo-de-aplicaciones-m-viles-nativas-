@@ -2,6 +2,7 @@ package com.example.puzzle
 
 import android.app.AlertDialog
 import android.content.DialogInterface
+import android.content.Intent
 import android.content.res.Configuration
 import android.os.Bundle
 import android.os.Handler
@@ -229,6 +230,10 @@ class MainActivity : AppCompatActivity() {
             }
             R.id.action_difficulty -> {
                 showDifficultyDialog()
+                true
+            }
+            R.id.action_multiplayer -> {
+                startMultiplayerActivity()
                 true
             }
             R.id.action_save_game -> {
@@ -827,5 +832,18 @@ class MainActivity : AppCompatActivity() {
         
         // We could also update other UI elements that need special handling
         // for the current theme or night mode here
+    }
+    
+    /**
+     * Starts the multiplayer activity for Bluetooth gameplay
+     */
+    private fun startMultiplayerActivity() {
+        // Pause the game while in multiplayer
+        isGameActive = false
+        handler.removeCallbacks(timerRunnable)
+        
+        // Launch the multiplayer activity
+        val intent = Intent(this, com.example.puzzle.bluetooth.MultiplayerActivity::class.java)
+        startActivity(intent)
     }
 }

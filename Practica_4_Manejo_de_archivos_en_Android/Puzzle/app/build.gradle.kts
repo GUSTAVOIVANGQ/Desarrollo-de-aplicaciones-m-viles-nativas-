@@ -38,6 +38,7 @@ android {
 dependencies {
     // Update the material dependency to a specific version
     implementation("com.google.android.material:material:1.9.0")
+    implementation ("com.google.code.gson:gson:2.10.1")
     // Keep other existing dependencies
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)

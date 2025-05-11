@@ -4,6 +4,15 @@
 
     <!-- Permiso para acceder a los sensores del dispositivo -->
     <uses-feature android:name="android.hardware.sensor.light" android:required="false" />
+    
+    <!-- Permisos para Bluetooth -->
+    <uses-permission android:name="android.permission.BLUETOOTH" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    
+    <uses-feature android:name="android.hardware.bluetooth" android:required="true" />
 
     <application
         android:allowBackup="true"
@@ -25,6 +34,18 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        
+        <activity
+            android:name=".bluetooth.MultiplayerActivity"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
+            android:label="@string/multiplayer_title"
+            android:parentActivityName=".MainActivity" />
+            
+        <activity
+            android:name=".bluetooth.MultiplayerGameActivity"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
+            android:label="@string/multiplayer_title"
+            android:parentActivityName=".bluetooth.MultiplayerActivity" />
     </application>
 
 </manifest>
