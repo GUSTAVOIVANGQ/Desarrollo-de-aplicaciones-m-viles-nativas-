@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "768423021614",
+    "project_id": "system-books",
+    "storage_bucket": "system-books.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:768423021614:android:530e675877df7fbd8ee3bf",
+        "android_client_info": {
+          "package_name": "com.example.systembooks"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBMFTE-9IzYR5LrOsaxmnwEAk_frI_Zypc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,0 +1,177 @@
+<resources>
+    <string name="app_name">SystemBooks</string>
+    <string name="login">Login</string>
+    <string name="register">Registro</string>
+    <string name="crud_operations">CRUD Operations</string>
+    <string name="profile">Profile</string>
+    <string name="logout">Logout</string>
+    <string name="nav_header_desc">Navigation header</string>
+    <string name="not_logged_in">Not logged in</string>
+    <string name="guest">Guest</string>
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+    <string name="user_list">Lista de usuarios</string>
+    <string name="books">Libros</string>
+    <!-- Login y Registro -->
+    <string name="login_title">Iniciar Sesión</string>
+    <string name="register_title">Registrarse</string>
+    <string name="email">Correo electrónico</string>
+    <string name="password">Contraseña</string>
+    <string name="confirm_password">Confirmar contraseña</string>
+    <string name="name">Nombre</string>
+    <string name="register_link">¿No tienes cuenta? Regístrate aquí</string>
+    <string name="login_link">¿Ya tienes cuenta? Inicia sesión aquí</string>
+    <string name="error_login">Error al iniciar sesión</string>
+    <string name="error_register">Error al registrarse</string>
+    <string name="success_login">Inicio de sesión exitoso</string>
+    <string name="success_register">Registro exitoso</string>
+    <string name="error_empty_fields">Todos los campos son obligatorios</string>
+    <string name="error_passwords_not_match">Las contraseñas no coinciden</string>
+    <string name="error_invalid_email">Correo electrónico inválido</string>
+    <string name="login_required">Inicie sesión para acceder a esta función</string>
+    <!-- Perfil y Gestión de Usuarios -->
+    <string name="profile_title">Mi Perfil</string>
+    <string name="change_photo">Cambiar Foto</string>
+    <string name="save_profile">Guardar Perfil</string>
+    <string name="user_management">Gestión de Usuarios</string>
+    <string name="add_user">Agregar Usuario</string>
+    <string name="edit_user">Editar Usuario</string>
+    <string name="delete_user">Eliminar Usuario</string>
+    <string name="delete_confirmation">¿Estás seguro de que deseas eliminar este usuario?</string>
+    <string name="yes">Sí</string>
+    <string name="no">No</string>
+    <string name="success_profile_update">Perfil actualizado con éxito</string>
+    <string name="error_profile_update">Error al actualizar el perfil</string>
+    <string name="success_photo_update">Foto actualizada con éxito</string>
+    <string name="error_photo_update">Error al actualizar la foto</string>
+    <string name="choose_photo_source">Seleccionar fuente de imagen</string>
+    <string name="camera">Cámara</string>
+    <string name="gallery">Galería</string>
+    <string name="cancel">Cancelar</string>
+    <string name="no_users_found">No se encontraron usuarios</string>
+    
+    <!-- Notificaciones -->
+    <string name="notification_admin_title">Administración de Notificaciones</string>
+    <string name="notification_title">Título de la notificación</string>
+    <string name="notification_message">Mensaje de la notificación</string>
+    <string name="notification_target">Destinatario de la notificación</string>
+    <string name="send_notification">Enviar Notificación</string>
+    <string name="notification_sent_success">Notificación enviada con éxito</string>
+    <string name="error_sending_notification">Error al enviar la notificación</string>
+    <string name="select_user">Seleccione un usuario</string>
+    <string name="error_loading_users">Error al cargar usuarios</string>
+    <string name="admin_required">Se requieren permisos de administrador</string>
+    <string name="error_field_required">Este campo es obligatorio</string>
+    <string name="admin_notifications">Administrar Notificaciones</string>
+    
+    <!-- Firebase Authentication -->
+    <string name="firebase_login_title">Login con Firebase</string>
+    <string name="firebase_register_title">Registro con Firebase</string>
+    <string name="choose_login_method">Selecciona método de inicio de sesión</string>
+    <string name="choose_register_method">Selecciona método de registro</string>
+    <string name="login_with_firebase">Iniciar sesión con Firebase</string>
+    <string name="register_with_firebase">Registrarse con Firebase</string>
+    <string name="login_with_api_instead">Iniciar sesión con la API en su lugar</string>
+    <string name="register_as_admin">Registrarse como administrador</string>
+    <string name="hint_name">Nombre</string>
+    <string name="hint_email">Email</string>
+    <string name="hint_password">Contraseña</string>
+    <string name="hint_confirm_password">Confirmar contraseña</string>
+    <string name="hint_admin_password">Contraseña de administrador</string>
+    <string name="already_have_account">¿Ya tienes una cuenta? Inicia sesión</string>
+    <string name="no_account_register">¿No tienes cuenta? Regístrate</string>
+    <string name="error_field_required">Este campo es requerido</string>
+    <string name="error_invalid_password">La contraseña debe tener al menos 6 caracteres</string>
+    <string name="success_login_firebase">Inicio de sesión con Firebase exitoso</string>
+    <string name="success_register_firebase">Registro con Firebase exitoso</string>
+    
+    <!-- Firebase Notifications -->
+    <string name="notifications">Notificaciones</string>
+    <string name="send_notification">Enviar notificación</string>
+    <string name="notification_title">Título de la notificación</string>
+    <string name="notification_body">Cuerpo de la notificación</string>
+    <string name="send_to_all">Enviar a todos los usuarios</string>
+    <string name="select_user">Seleccionar usuario</string>
+    <string name="notification_sent">Notificación enviada</string>
+    <string name="error_sending_notification">Error al enviar la notificación</string>
+    <string name="user_deleted">Usuario eliminado con éxito</string>
+    <string name="error_deleting_user">Error al eliminar el usuario</string>
+    
+    <!-- Roles y Acceso -->
+    <string name="access_denied">Acceso Denegado</string>
+    <string name="access_denied_description">No tienes permisos para acceder a esta función. Por favor, contacta al administrador si crees que deberías tener acceso.</string>
+    <string name="access_denied_message">No tienes permiso para acceder a esta sección</string>
+    <string name="admin_role_name">Administrador</string>
+    <string name="user_role_name">Usuario</string>
+    <string name="default_username">Usuario</string>
+    <string name="go_back">Volver</string>
+    <string name="admin_welcome">¡Bienvenido administrador!</string>
+    <string name="logout_success">Sesión cerrada correctamente</string>
+    <!-- Navigation -->
+    <string name="home">Inicio</string>
+    <string name="search">Búsqueda</string>
+    <string name="categories">Categorías</string>
+    
+    <!-- Home Fragment -->
+    <string name="featured_books">Libros destacados</string>
+    <string name="recommended_books">Libros recomendados</string>
+    <string name="loading_recommendations">Cargando recomendaciones...</string>
+    <string name="error_loading_recommendations">Error al cargar las recomendaciones</string>
+    <string name="no_recommendations">No hay recomendaciones disponibles</string>
+    
+    <!-- Search Fragment -->
+    <string name="search_hint">Buscar libros por título, autor…</string>
+    <string name="no_results">No se encontraron resultados</string>
+    <string name="search_results">Search Results</string>
+    <string name="search_results_for">Results for "%1$s"</string>
+    <string name="no_results_found">No results found</string>
+    
+    <!-- Categories Fragment -->
+    <string name="categories_description">Explora libros por categoría</string>
+    <string name="category_arrow">Ver categoría</string>
+    
+    <!-- Book Details -->
+    <string name="book_cover">Portada del libro</string>
+    <string name="book_details">Detalles</string>
+    <string name="publisher">Editorial:</string>
+    <string name="publish_year">Año de publicación:</string>
+    <string name="pages">Páginas:</string>
+    <string name="description">Descripción</string>
+    
+    <!-- Loading -->
+    <string name="loading">Cargando...</string>
+    
+    <!-- Error messages -->
+    <string name="error_icon">Icono de error</string>
+    <string name="error_generic">Algo salió mal. Por favor, inténtelo de nuevo.</string>
+    <string name="error_network">Sin conexión a internet. Por favor, compruebe su conexión.</string>
+    <string name="error_server">Error del servidor. Por favor, inténtelo de nuevo más tarde.</string>
+    <string name="retry">Reintentar</string>
+    
+    <!-- Favorite Books -->
+    <string name="favorites">Favoritos</string>
+    <string name="add_to_favorites">Agregar a favoritos</string>
+    <string name="remove_from_favorites">Quitar de favoritos</string>
+    <string name="added_to_favorites">Libro agregado a favoritos</string>
+    <string name="removed_from_favorites">Libro quitado de favoritos</string>
+    <string name="error_updating_favorites">Error al actualizar favoritos</string>
+    <string name="no_favorites">No tienes libros favoritos</string>
+    
+    <!-- Search History -->
+    <string name="search_history">Historial de búsqueda</string>
+    <string name="no_search_history">No hay historial de búsqueda</string>
+    <string name="clear_search_history">Borrar historial de búsqueda</string>
+    <string name="clear_search_history_confirmation">¿Estás seguro de que deseas borrar todo el historial de búsqueda?</string>
+    
+    <!-- Admin User Data View -->
+    <string name="admin_user_data">Datos de Usuarios</string>
+    <string name="no_search_history_found">No se encontró historial de búsqueda</string>
+    <string name="no_favorites_found">No se encontraron favoritos</string>
+    <string name="show_details">Mostrar detalles</string>
+    <string name="hide_details">Ocultar detalles</string>
+    <string name="search_history_of">Historial de búsqueda de %1$s</string>
+    <string name="favorites_of">Favoritos de %1$s</string>
+    <string name="user_email">%1$s</string>
+    <string name="items_count">%1$d items</string>
+    <string name="load_error">Error al cargar datos</string>
+</resources>
