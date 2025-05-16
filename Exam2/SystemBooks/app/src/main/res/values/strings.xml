@@ -50,25 +50,46 @@
     <string name="cancel">Cancelar</string>
     <string name="no_users_found">No se encontraron usuarios</string>
     
-    <!-- Notificaciones -->
-    <string name="notification_admin_title">Administración de Notificaciones</string>
+    <!-- Firebase -->
+    <string name="firebase_login_title">Iniciar sesión con Firebase</string>
+    <string name="firebase_register_title">Registrarse con Firebase</string>
+    <string name="choose_login_method">Elegir método de inicio de sesión</string>
+    <string name="choose_register_method">Elegir método de registro</string>
+    <string name="select_user">Por favor seleccione un usuario</string>
+    <string name="error_loading_users">Error al cargar usuarios</string>
+    <string name="default_username">Usuario</string>
+    <string name="admin_role_name">Administrador</string>
+    <string name="user_role_name">Usuario</string>
+    <string name="logout_success">Sesión cerrada correctamente</string>
+    <string name="admin_notifications">Notificaciones</string>
+    <string name="notification_admin_title">Administración de notificaciones</string>
     <string name="notification_title">Título de la notificación</string>
     <string name="notification_message">Mensaje de la notificación</string>
-    <string name="notification_target">Destinatario de la notificación</string>
-    <string name="send_notification">Enviar Notificación</string>
-    <string name="notification_sent_success">Notificación enviada con éxito</string>
-    <string name="error_sending_notification">Error al enviar la notificación</string>
-    <string name="select_user">Seleccione un usuario</string>
-    <string name="error_loading_users">Error al cargar usuarios</string>
+    <string name="notification_target">Destinatario</string>
+    <string name="send_notification">Enviar notificación</string>
+    <string name="notification_sent_success">Notificación enviada exitosamente</string>
+    <string name="error_sending_notification">Error al enviar notificación</string>
+    <string name="error_field_required">Este campo es requerido</string>
+    
+    <!-- Notificaciones -->
+<!--    <string name="notification_admin_title">Administración de Notificaciones</string>-->
+<!--    <string name="notification_title">Título de la notificación</string>-->
+<!--    <string name="notification_message">Mensaje de la notificación</string>-->
+<!--    <string name="notification_target">Destinatario de la notificación</string>-->
+<!--    <string name="send_notification">Enviar Notificación</string>-->
+<!--    <string name="notification_sent_success">Notificación enviada con éxito</string>-->
+<!--    <string name="error_sending_notification">Error al enviar la notificación</string>-->
+<!--    <string name="select_user">Seleccione un usuario</string>-->
+<!--    <string name="error_loading_users">Error al cargar usuarios</string>-->
     <string name="admin_required">Se requieren permisos de administrador</string>
-    <string name="error_field_required">Este campo es obligatorio</string>
-    <string name="admin_notifications">Administrar Notificaciones</string>
+<!--    <string name="error_field_required">Este campo es obligatorio</string>-->
+<!--    <string name="admin_notifications">Administrar Notificaciones</string>-->
     
     <!-- Firebase Authentication -->
-    <string name="firebase_login_title">Login con Firebase</string>
-    <string name="firebase_register_title">Registro con Firebase</string>
-    <string name="choose_login_method">Selecciona método de inicio de sesión</string>
-    <string name="choose_register_method">Selecciona método de registro</string>
+<!--    <string name="firebase_login_title">Login con Firebase</string>-->
+<!--    <string name="firebase_register_title">Registro con Firebase</string>-->
+<!--    <string name="choose_login_method">Selecciona método de inicio de sesión</string>-->
+<!--    <string name="choose_register_method">Selecciona método de registro</string>-->
     <string name="login_with_firebase">Iniciar sesión con Firebase</string>
     <string name="register_with_firebase">Registrarse con Firebase</string>
     <string name="login_with_api_instead">Iniciar sesión con la API en su lugar</string>
@@ -80,20 +101,20 @@
     <string name="hint_admin_password">Contraseña de administrador</string>
     <string name="already_have_account">¿Ya tienes una cuenta? Inicia sesión</string>
     <string name="no_account_register">¿No tienes cuenta? Regístrate</string>
-    <string name="error_field_required">Este campo es requerido</string>
+<!--    <string name="error_field_required">Este campo es requerido</string>-->
     <string name="error_invalid_password">La contraseña debe tener al menos 6 caracteres</string>
     <string name="success_login_firebase">Inicio de sesión con Firebase exitoso</string>
     <string name="success_register_firebase">Registro con Firebase exitoso</string>
     
     <!-- Firebase Notifications -->
     <string name="notifications">Notificaciones</string>
-    <string name="send_notification">Enviar notificación</string>
-    <string name="notification_title">Título de la notificación</string>
+<!--    <string name="send_notification">Enviar notificación</string>-->
+<!--    <string name="notification_title">Título de la notificación</string>-->
     <string name="notification_body">Cuerpo de la notificación</string>
     <string name="send_to_all">Enviar a todos los usuarios</string>
-    <string name="select_user">Seleccionar usuario</string>
+<!--    <string name="select_user">Seleccionar usuario</string>-->
     <string name="notification_sent">Notificación enviada</string>
-    <string name="error_sending_notification">Error al enviar la notificación</string>
+<!--    <string name="error_sending_notification">Error al enviar la notificación</string>-->
     <string name="user_deleted">Usuario eliminado con éxito</string>
     <string name="error_deleting_user">Error al eliminar el usuario</string>
     
@@ -101,12 +122,12 @@
     <string name="access_denied">Acceso Denegado</string>
     <string name="access_denied_description">No tienes permisos para acceder a esta función. Por favor, contacta al administrador si crees que deberías tener acceso.</string>
     <string name="access_denied_message">No tienes permiso para acceder a esta sección</string>
-    <string name="admin_role_name">Administrador</string>
-    <string name="user_role_name">Usuario</string>
-    <string name="default_username">Usuario</string>
+<!--    <string name="admin_role_name">Administrador</string>-->
+<!--    <string name="user_role_name">Usuario</string>-->
+<!--    <string name="default_username">Usuario</string>-->
     <string name="go_back">Volver</string>
     <string name="admin_welcome">¡Bienvenido administrador!</string>
-    <string name="logout_success">Sesión cerrada correctamente</string>
+<!--    <string name="logout_success">Sesión cerrada correctamente</string>-->
     <!-- Navigation -->
     <string name="home">Inicio</string>
     <string name="search">Búsqueda</string>

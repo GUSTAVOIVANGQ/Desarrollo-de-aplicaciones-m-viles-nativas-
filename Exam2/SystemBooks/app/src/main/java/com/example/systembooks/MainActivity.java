@@ -76,7 +76,12 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
                 loadFragment(new UserManagementFragment());
                 navigationView.setCheckedItem(R.id.nav_crud);
             } else if (roleManager.isUser()) {
-                loadFragment(new ProfileFragment());
+                // Dependiendo del método de autenticación, cargar el fragmento correspondiente
+                if (sessionManager.isFirebaseAuth()) {
+                    loadFragment(new com.example.systembooks.firebase.FirebaseProfileFragment());
+                } else {
+                    loadFragment(new ProfileFragment());
+                }
                 navigationView.setCheckedItem(R.id.nav_profile);
             }
         } else {
@@ -136,7 +141,12 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         } else if (id == R.id.nav_profile) {
             // Verificar si tiene permisos de usuario
             if (roleManager.isUser() || roleManager.isAdmin()) {
-                fragment = new ProfileFragment();
+                // Dependiendo del método de autenticación, cargar el fragmento correspondiente
+                if (sessionManager.isFirebaseAuth()) {
+                    fragment = new com.example.systembooks.firebase.FirebaseProfileFragment();
+                } else {
+                    fragment = new ProfileFragment();
+                }
             } else {
                 fragment = new AccessDeniedFragment();
                 Toast.makeText(this, R.string.access_denied_message, Toast.LENGTH_SHORT).show();
@@ -310,7 +320,12 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             fragment = new UserManagementFragment();
             navigationView.setCheckedItem(R.id.nav_crud);
         } else if (roleManager.isUser()) {
-            fragment = new ProfileFragment();
+            // Dependiendo del método de autenticación, cargar el fragmento correspondiente
+            if (sessionManager.isFirebaseAuth()) {
+                fragment = new com.example.systembooks.firebase.FirebaseProfileFragment();
+            } else {
+                fragment = new ProfileFragment();
+            }
             navigationView.setCheckedItem(R.id.nav_profile);
         } else {
             fragment = new AccessDeniedFragment();

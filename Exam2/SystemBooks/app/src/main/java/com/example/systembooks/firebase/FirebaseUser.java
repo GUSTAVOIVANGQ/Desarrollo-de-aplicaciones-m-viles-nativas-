@@ -31,18 +31,15 @@ public class FirebaseUser {
         this.email = email;
         this.role = role;
         this.createdAt = System.currentTimeMillis();
-    }
-
-    @Exclude
+    }    @Exclude
     public Map<String, Object> toMap() {
         HashMap<String, Object> result = new HashMap<>();
         result.put("username", username);
         result.put("email", email);
         result.put("role", role);
         result.put("createdAt", createdAt != null ? createdAt : System.currentTimeMillis());
-        if (photoUrl != null) {
-            result.put("photoUrl", photoUrl);
-        }
+        // Siempre incluimos photoUrl, puede ser null si no tiene imagen
+        result.put("photoUrl", photoUrl);
         return result;
     }
 
