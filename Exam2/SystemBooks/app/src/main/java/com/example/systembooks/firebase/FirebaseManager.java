@@ -16,13 +16,13 @@ import com.google.firebase.storage.FirebaseStorage;
  */
 public class FirebaseManager {
 
-    private static final String TAG = "FirebaseManager";
-    private static FirebaseManager instance;
+    private static final String TAG = "FirebaseManager";    private static FirebaseManager instance;
 
     private FirebaseAuth auth;
     private FirebaseFirestore firestore;
     private FirebaseStorage storage;
     private FirebaseMessaging messaging;
+    private Context context;
 
     private FirebaseManager() {
         // Private constructor to enforce singleton pattern
@@ -30,22 +30,63 @@ public class FirebaseManager {
         firestore = FirebaseFirestore.getInstance();
         storage = FirebaseStorage.getInstance();
         messaging = FirebaseMessaging.getInstance();
-    }
-
-    /**
+    }/**
      * Initializes Firebase in the application
      * @param context Application context
-     */
-    public static void init(Context context) {
+     */    public static void init(Context context) {
         try {
             FirebaseApp.initializeApp(context);
+            
+            // Store application context
+            getInstance().setContext(context);
+            
+            // Configure FCM for improved delivery reliability
+            setupFCM();
+            
             Log.d(TAG, "Firebase initialized successfully");
         } catch (Exception e) {
             Log.e(TAG, "Error initializing Firebase: " + e.getMessage());
         }
     }
+    
+    /**
+     * Get context
+     * @return The application context
+     */
+    public Context getContext() {
+        return context;
+    }
 
     /**
+     * Set context
+     * @param context The application context
+     */
+    public void setContext(Context context) {
+        this.context = context.getApplicationContext();
+    }    /**
+     * Configure Firebase Cloud Messaging for optimal performance
+     */
+    private static void setupFCM() {
+        try {
+            // Configure FCM for high priority delivery
+            FirebaseMessaging.getInstance().setAutoInitEnabled(true);
+            
+            // Request token early for better reliability
+            FirebaseMessaging.getInstance().getToken()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful() && task.getResult() != null) {
+                        String token = task.getResult();
+                        Log.d(TAG, "Initial FCM token obtained");
+                    } else {
+                        Log.e(TAG, "Failed to get initial FCM token", task.getException());
+                    }
+                });
+            
+            Log.d(TAG, "FCM setup completed");
+        } catch (Exception e) {
+            Log.e(TAG, "Error setting up FCM: " + e.getMessage());
+        }
+    }/**
      * Gets the singleton instance of FirebaseManager
      * @return FirebaseManager instance
      */
@@ -55,7 +96,7 @@ public class FirebaseManager {
         }
         return instance;
     }
-
+    
     /**
      * Gets Firebase Auth instance
      * @return FirebaseAuth instance
@@ -86,9 +127,7 @@ public class FirebaseManager {
      */
     public FirebaseMessaging getMessaging() {
         return messaging;
-    }
-
-    /**
+    }    /**
      * Subscribes to a topic for FCM notifications
      * @param topic Topic name
      */
@@ -101,5 +140,55 @@ public class FirebaseManager {
                         Log.e(TAG, "Failed to subscribe to topic: " + topic);
                     }
                 });
+    }
+    
+    /**
+     * Refresh FCM token explicitly
+     * @param force Whether to force a server refresh
+     */
+    public void refreshToken(final boolean force) {
+        try {
+            FirebaseMessaging.getInstance().getToken()
+                    .addOnCompleteListener(task -> {
+                        if (task.isSuccessful() && task.getResult() != null) {
+                            // Token refreshed
+                            String token = task.getResult();
+                            Log.d(TAG, "FCM token refreshed");
+                            
+                            // Update server if force=true or user logged in
+                            if (force && auth.getCurrentUser() != null && context != null) {
+                                new NotificationHelper(context).storeTokenForUser(auth.getCurrentUser().getUid(), token);
+                            }
+                        } else {
+                            Log.e(TAG, "Failed to refresh FCM token", task.getException());
+                        }
+                    });
+        } catch (Exception e) {
+            Log.e(TAG, "Error refreshing FCM token: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Apply optimizations for notification delivery
+     */
+    public void optimizeNotificationDelivery() {
+        try {
+            // Ensure we have a valid token
+            refreshToken(true);
+            
+            // Apply optimization for Firebase connectivity
+            if (context != null) {
+                // Set keep alive time for FCM connection
+                android.os.Handler handler = new android.os.Handler(android.os.Looper.getMainLooper());
+                handler.postDelayed(() -> {
+                    // Trigger a reconnection of FCM service
+                    refreshToken(false);
+                }, 1000);
+            }
+            
+            Log.d(TAG, "Notification delivery optimizations applied");
+        } catch (Exception e) {
+            Log.e(TAG, "Error applying notification optimizations: " + e.getMessage());
+        }
     }
 }

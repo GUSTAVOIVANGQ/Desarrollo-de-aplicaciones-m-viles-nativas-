@@ -89,7 +89,20 @@ public class FirebaseAuthRepository {
                             FirebaseUser firebaseUser = auth.getCurrentUser();
                             if (firebaseUser != null) {
                                 // Get user data from Firestore
-                                getUserFromFirestore(firebaseUser.getUid(), callback);
+                                getUserFromFirestore(firebaseUser.getUid(), new FirebaseCallback<com.example.systembooks.firebase.FirebaseUser>() {
+                                    @Override
+                                    public void onSuccess(com.example.systembooks.firebase.FirebaseUser result) {
+                                        // Update FCM token after successful login
+                                        processFcmTokenAfterLogin(firebaseUser.getUid());
+                                        
+                                        callback.onSuccess(result);
+                                    }
+                                    
+                                    @Override
+                                    public void onError(String errorMessage) {
+                                        callback.onError(errorMessage);
+                                    }
+                                });
                             } else {
                                 callback.onError("Failed to get user after login");
                             }
@@ -100,6 +113,24 @@ public class FirebaseAuthRepository {
                         }
                     }
                 });
+    }
+    
+    /**
+     * Process FCM token after successful login
+     * @param userId User ID
+     */
+    private void processFcmTokenAfterLogin(String userId) {
+        try {
+            // Process any pending token saved before login
+            new NotificationHelper(context).processPendingToken(userId);
+            
+            // Also request a fresh token to ensure it's up to date
+            FirebaseManager.getInstance().refreshToken(false);
+            
+            Log.d(TAG, "FCM token processing triggered after login");
+        } catch (Exception e) {
+            Log.e(TAG, "Error processing FCM token after login", e);
+        }
     }
 
     /**
