@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../widgets/flow_diagram_canvas.dart';
+import '../widgets/flow_diagram_canvas_final.dart';
 import '../widgets/node_palette.dart';
 import '../widgets/node_editor_dialog.dart';
 import '../widgets/validation_result_dialog.dart';
@@ -166,8 +166,16 @@ class _EditorScreenState extends State<EditorScreen> {
                     }
                   },
                   onNodeTap: (node) {
+                    print('Editor recibió tap en nodo: ${node?.type}');
                     setState(() {
-                      if (isConnecting && connectionStart != null) {
+                      if (node == null) {
+                        // Si se toca un área vacía, deseleccionamos todo
+                        if (!isConnecting) {
+                          print('Deseleccionando nodo');
+                          selectedNode = null;
+                          selectedConnection = null;
+                        }
+                      } else if (isConnecting && connectionStart != null) {
                         // Si estamos en modo conexión y ya tenemos un nodo de origen,
                         // este tap es para seleccionar el nodo destino y crear la conexión
                         if (connectionStart != node) {
@@ -182,11 +190,41 @@ class _EditorScreenState extends State<EditorScreen> {
                         }
                       } else {
                         // Si no estamos en modo conexión, simplemente seleccionamos el nodo
+                        print('Seleccionando nodo: ${node.type}');
                         selectedNode = node;
                         selectedConnection =
                             null; // Deseleccionar cualquier conexión
                       }
                     });
+
+                    // Mostrar indicación visual de que el nodo fue seleccionado
+                    if (node != null && !isConnecting) {
+                      String nodeName = "";
+                      switch (node.type) {
+                        case NodeType.start:
+                          nodeName = "Inicio";
+                          break;
+                        case NodeType.end:
+                          nodeName = "Fin";
+                          break;
+                        case NodeType.process:
+                          nodeName = "Proceso";
+                          break;
+                        case NodeType.decision:
+                          nodeName = "Decisión";
+                          break;
+                        case NodeType.input:
+                          nodeName = "Entrada";
+                          break;
+                        case NodeType.output:
+                          nodeName = "Salida";
+                          break;
+                        case NodeType.variable:
+                          nodeName = "Variable";
+                          break;
+                      }
+                      _showSnackBar('Nodo ${nodeName} seleccionado');
+                    }
                   },
                   onNodeLongPress: (node) {
                     setState(() {

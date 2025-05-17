@@ -80,8 +80,19 @@ class DiagramNode {
 
   // Verificar si un punto está dentro del nodo
   bool containsPoint(Offset point) {
+    // Asegurarse de que el punto está en coordenadas locales al nodo
     final localPoint = point - position;
-    return getPath().contains(localPoint);
+
+    // Para detección más precisa, añadimos una verificación simplificada usando un rectángulo
+    if (localPoint.dx >= 0 &&
+        localPoint.dx <= size.width &&
+        localPoint.dy >= 0 &&
+        localPoint.dy <= size.height) {
+      // Si estamos dentro del rectángulo delimitador, verificamos la forma exacta
+      return getPath().contains(localPoint);
+    }
+
+    return false;
   }
 
   // Puntos de conexión para las líneas

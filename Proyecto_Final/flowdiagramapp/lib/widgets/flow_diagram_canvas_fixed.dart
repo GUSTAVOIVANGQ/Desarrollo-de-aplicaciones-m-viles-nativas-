@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/gestures.dart';
 import '../models/diagram_node.dart';
 import 'dart:math' as math;
 
@@ -47,7 +48,6 @@ class _FlowDiagramCanvasState extends State<FlowDiagramCanvas> {
   Offset? nodeDragStart;
   bool isLongPressing = false;
   bool isSnappingEnabled = false;
-  bool isDragging = false;
 
   Offset _applySnapping(Offset position) {
     final snappedX = (position.dx / FlowDiagramPainter.gridSize).round() *
@@ -65,19 +65,11 @@ class _FlowDiagramCanvasState extends State<FlowDiagramCanvas> {
       localPosition.dy / widget.scale,
     );
 
-    print('Buscando nodo en posición original: $position');
-    print(
-        'Posición ajustada para buscar: $scaledPosition (con panOffset: ${widget.panOffset}, scale: ${widget.scale})');
-
     // Revisamos los nodos en orden inverso para que los que están encima (dibujados último) tengan prioridad
     for (int i = widget.nodes.length - 1; i >= 0; i--) {
       final node = widget.nodes[i];
-
-      // Verificar si el punto está dentro del nodo
       if (node.containsPoint(scaledPosition)) {
-        print('Nodo encontrado: ${node.type} en posición ${node.position}');
-        print(
-            'Tamaño del nodo: ${node.size}, Distancia al centro: ${(scaledPosition - (node.position + Offset(node.size.width / 2, node.size.height / 2))).distance}');
+        print('Nodo encontrado: ${node.type} en posición $scaledPosition');
         return node;
       }
     }
@@ -134,22 +126,6 @@ class _FlowDiagramCanvasState extends State<FlowDiagramCanvas> {
   Widget build(BuildContext context) {
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
-      // Detectar toques simples (tap down) para almacenar el punto de inicio
-      onTapDown: (details) {
-        // Almacenar el punto donde se tocó
-        setState(() {
-          dragStart = details.localPosition;
-          isDragging = false; // Resetear la bandera de arrastre
-        });
-
-        // Verificamos inmediatamente si hay un nodo en esta posición
-        // para proporcionar retroalimentación instantánea
-        final node = _findNodeAtPosition(details.localPosition);
-        if (node != null) {
-          print('TapDown en nodo: ${node.type}');
-        }
-      },
-
       onScaleStart: (details) {
         print('onScaleStart en ${details.localFocalPoint}');
         final node = _findNodeAtPosition(details.localFocalPoint);
@@ -169,14 +145,7 @@ class _FlowDiagramCanvasState extends State<FlowDiagramCanvas> {
           });
         }
       },
-
       onScaleUpdate: (details) {
-        // Si el gesto ha movido lo suficiente, considerarlo como un arrastre
-        if (dragStart != null &&
-            (details.localFocalPoint - dragStart!).distance > 3.0) {
-          isDragging = true;
-        }
-
         if (draggingNode != null &&
             dragStart != null &&
             nodeDragStart != null &&
@@ -209,7 +178,6 @@ class _FlowDiagramCanvasState extends State<FlowDiagramCanvas> {
           );
         }
       },
-
       onScaleEnd: (details) {
         if (draggingNode != null) {
           // Aplicar ajuste a cuadrícula si está habilitado
@@ -220,19 +188,14 @@ class _FlowDiagramCanvasState extends State<FlowDiagramCanvas> {
             }
           }
 
-          // Guardar referencia al nodo arrastrado
-          final dragged = draggingNode;
-
+          // Limpiar estado
           setState(() {
             draggingNode = null;
+            dragStart = null;
             nodeDragStart = null;
           });
-
-          // Mantener el nodo seleccionado después del arrastre
-          widget.onNodeTap(dragged);
         }
       },
-
       onLongPress: () {
         // Para iniciar conexión entre nodos
         if (dragStart != null) {
@@ -245,22 +208,16 @@ class _FlowDiagramCanvasState extends State<FlowDiagramCanvas> {
           }
         }
       },
-
       onLongPressEnd: (details) {
         setState(() {
           isLongPressing = false;
         });
       },
-
       onTap: () {
         // Para seleccionar un nodo o conexión, o deseleccionar si se toca en un espacio vacío
-        if (!isLongPressing && dragStart != null && !isDragging) {
-          // Solo procesamos el tap si no estamos arrastrando
+        if (!isLongPressing && dragStart != null) {
           final node = _findNodeAtPosition(dragStart!);
-          print('Tap detectado. Nodo encontrado: ${node?.type}');
-
           if (node != null) {
-            // Si se encontró un nodo, notificar para seleccionar
             widget.onNodeTap(node);
           } else {
             final connection = _findConnectionAtPosition(dragStart!);
@@ -269,17 +226,10 @@ class _FlowDiagramCanvasState extends State<FlowDiagramCanvas> {
             } else {
               // Si no se tocó un nodo ni una conexión, notificar al padre para deseleccionar
               widget.onNodeTap(null);
-              print('Enviando null para deseleccionar');
             }
           }
         }
-
-        // Resetear el estado de arrastre
-        setState(() {
-          isDragging = false;
-        });
       },
-
       child: Container(
         color: Colors.grey[100],
         child: ClipRect(
@@ -356,178 +306,192 @@ class FlowDiagramPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    // Aplicar transformación para pan y zoom
     canvas.save();
-    canvas.translate(panOffset.dx, panOffset.dy);
-    canvas.scale(scale);
 
-    // Dibujar cuadrícula
+    canvas.translate(panOffset.dx, panOffset.dy);
+    canvas.scale(scale, scale);
+
     _drawGrid(canvas, size);
 
-    // Dibujar conexiones
     for (final connection in connections) {
       _drawConnection(canvas, connection);
     }
 
-    // Dibujar nodos
     for (final node in nodes) {
-      _drawNode(canvas, node);
+      final bool isSelected = node == selectedNode;
+      final bool isDragging = node == draggingNode;
+
+      _drawNode(canvas, node, isSelected, isDragging);
     }
 
     canvas.restore();
   }
 
   void _drawGrid(Canvas canvas, Size size) {
-    final width = size.width / scale;
-    final height = size.height / scale;
+    final visibleRect = Rect.fromLTWH(
+      -panOffset.dx / scale,
+      -panOffset.dy / scale,
+      size.width / scale,
+      size.height / scale,
+    );
 
-    final startX = (-panOffset.dx / scale / gridSize).floor() * gridSize;
-    final startY = (-panOffset.dy / scale / gridSize).floor() * gridSize;
-
-    // Líneas verticales
-    for (double x = startX; x <= startX + width; x += gridSize) {
+    double y = (visibleRect.top / gridSize).floor() * gridSize;
+    while (y < visibleRect.bottom) {
       canvas.drawLine(
-        Offset(x, startY),
-        Offset(x, startY + height),
+        Offset(visibleRect.left, y),
+        Offset(visibleRect.right, y),
         gridPaint,
       );
+      y += gridSize;
     }
 
-    // Líneas horizontales
-    for (double y = startY; y <= startY + height; y += gridSize) {
+    double x = (visibleRect.left / gridSize).floor() * gridSize;
+    while (x < visibleRect.right) {
       canvas.drawLine(
-        Offset(startX, y),
-        Offset(startX + width, y),
+        Offset(x, visibleRect.top),
+        Offset(x, visibleRect.bottom),
         gridPaint,
       );
+      x += gridSize;
     }
   }
 
-  void _drawNode(Canvas canvas, DiagramNode node) {
+  void _drawNode(
+      Canvas canvas, DiagramNode node, bool isSelected, bool isDragging) {
     canvas.save();
+
     canvas.translate(node.position.dx, node.position.dy);
 
-    // Obtener la forma del nodo según su tipo
     final path = node.getPath();
 
-    // Dibujar el fondo del nodo
-    canvas.drawPath(path, nodeFillPaint);
+    if (isDragging) {
+      final shadowPaint = Paint()
+        ..color = Colors.black.withOpacity(0.2)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4.0);
 
-    // Dibujar el borde con estilo adecuado según el estado del nodo
-    if (node == selectedNode) {
-      canvas.drawPath(path, selectedNodePaint);
-    } else if (node == draggingNode) {
+      canvas.drawPath(path, shadowPaint);
+      canvas.drawPath(path, nodeFillPaint);
       canvas.drawPath(path, draggingNodePaint);
     } else {
-      canvas.drawPath(path, nodeStrokePaint);
+      canvas.drawPath(path, nodeFillPaint);
+      canvas.drawPath(path, isSelected ? selectedNodePaint : nodeStrokePaint);
     }
 
-    // Dibujar texto del nodo
-    _drawNodeText(canvas, node);
-
-    canvas.restore();
-  }
-
-  void _drawNodeText(Canvas canvas, DiagramNode node) {
     final textSpan = TextSpan(
-      text: node.text,
+      text: node.text.isEmpty ? _getDefaultNodeText(node.type) : node.text,
       style: nodeTextStyle,
     );
 
     final textPainter = TextPainter(
       text: textSpan,
-      textAlign: TextAlign.center,
       textDirection: TextDirection.ltr,
+      textAlign: TextAlign.center,
     );
 
-    textPainter.layout(maxWidth: node.size.width - 10);
+    textPainter.layout(minWidth: 0, maxWidth: node.size.width - 20);
 
-    final xCenter = (node.size.width - textPainter.width) / 2;
-    final yCenter = (node.size.height - textPainter.height) / 2;
-    textPainter.paint(canvas, Offset(xCenter, yCenter));
+    textPainter.paint(
+      canvas,
+      Offset(
+        (node.size.width - textPainter.width) / 2,
+        (node.size.height - textPainter.height) / 2,
+      ),
+    );
+
+    canvas.restore();
   }
 
   void _drawConnection(Canvas canvas, Connection connection) {
     final points = connection.getConnectionPoints();
-    if (points.length < 2) return;
 
-    final start = points[0];
-    final end = points[1];
+    if (points.length >= 2) {
+      final start = points[0];
+      final end = points[1];
 
-    // Dibujar la línea
-    final path = Path();
-    path.moveTo(start.dx, start.dy);
-    path.lineTo(end.dx, end.dy);
-    canvas.drawPath(path, connectionPaint);
+      final path = Path();
+      path.moveTo(start.dx, start.dy);
+      path.lineTo(end.dx, end.dy);
 
-    // Dibujar la flecha
-    _drawArrow(canvas, start, end);
+      canvas.drawPath(path, connectionPaint);
 
-    // Dibujar la etiqueta si existe
-    if (connection.label.isNotEmpty) {
-      _drawConnectionLabel(canvas, connection, start, end);
+      _drawArrow(canvas, end, start);
+
+      if (connection.label.isNotEmpty) {
+        final midPoint = Offset(
+          (start.dx + end.dx) / 2,
+          (start.dy + end.dy) / 2,
+        );
+
+        final textSpan = TextSpan(
+          text: connection.label,
+          style: const TextStyle(
+            fontSize: 12,
+            color: Colors.black87,
+            backgroundColor: Colors.white70,
+          ),
+        );
+
+        final textPainter = TextPainter(
+          text: textSpan,
+          textDirection: TextDirection.ltr,
+        );
+
+        textPainter.layout();
+
+        textPainter.paint(
+          canvas,
+          Offset(
+            midPoint.dx - textPainter.width / 2,
+            midPoint.dy - textPainter.height / 2,
+          ),
+        );
+      }
     }
   }
 
-  void _drawArrow(Canvas canvas, Offset start, Offset end) {
-    final direction = (end - start).normalize();
-    final perpendicular = Offset(-direction.dy, direction.dx);
+  void _drawArrow(Canvas canvas, Offset tip, Offset from) {
+    final direction = (tip - from).normalize();
 
-    final arrowBase = end - direction * arrowSize;
-    final arrowLeft = arrowBase - perpendicular * arrowSize / 2;
-    final arrowRight = arrowBase + perpendicular * arrowSize / 2;
+    final angle = math.atan2(direction.dy, direction.dx);
+
+    final p1 = tip -
+        Offset(
+          arrowSize * math.cos(angle - math.pi / 6),
+          arrowSize * math.sin(angle - math.pi / 6),
+        );
+
+    final p2 = tip -
+        Offset(
+          arrowSize * math.cos(angle + math.pi / 6),
+          arrowSize * math.sin(angle + math.pi / 6),
+        );
 
     final arrowPath = Path()
-      ..moveTo(end.dx, end.dy)
-      ..lineTo(arrowLeft.dx, arrowLeft.dy)
-      ..lineTo(arrowRight.dx, arrowRight.dy)
+      ..moveTo(tip.dx, tip.dy)
+      ..lineTo(p1.dx, p1.dy)
+      ..lineTo(p2.dx, p2.dy)
       ..close();
 
-    canvas.drawPath(arrowPath, Paint()..color = Colors.black);
+    canvas.drawPath(arrowPath, connectionPaint);
   }
 
-  void _drawConnectionLabel(
-      Canvas canvas, Connection connection, Offset start, Offset end) {
-    final midpoint = Offset(
-      (start.dx + end.dx) / 2,
-      (start.dy + end.dy) / 2,
-    );
-
-    final textSpan = TextSpan(
-      text: connection.label,
-      style: const TextStyle(
-        fontSize: 12,
-        color: Colors.black,
-        backgroundColor: Color(0xBBFFFFFF),
-      ),
-    );
-    final textPainter = TextPainter(
-      text: textSpan,
-      textAlign: TextAlign.center,
-      textDirection: TextDirection.ltr,
-    );
-
-    textPainter.layout();
-
-    // Desplazamiento pequeño para que no esté directamente sobre la línea
-    final offset = Offset(
-      midpoint.dx - textPainter.width / 2,
-      midpoint.dy - textPainter.height - 5,
-    );
-
-    // Dibujar un rectángulo de fondo
-    final rect = Rect.fromLTWH(
-      offset.dx - 2,
-      offset.dy - 2,
-      textPainter.width + 4,
-      textPainter.height + 4,
-    );
-    canvas.drawRect(
-      rect,
-      Paint()..color = Colors.white.withOpacity(0.8),
-    );
-
-    textPainter.paint(canvas, offset);
+  String _getDefaultNodeText(NodeType type) {
+    switch (type) {
+      case NodeType.start:
+        return 'Inicio';
+      case NodeType.end:
+        return 'Fin';
+      case NodeType.process:
+        return 'Proceso';
+      case NodeType.decision:
+        return '¿Condición?';
+      case NodeType.input:
+        return 'Entrada';
+      case NodeType.output:
+        return 'Salida';
+      case NodeType.variable:
+        return 'Variable';
+    }
   }
 
   @override
