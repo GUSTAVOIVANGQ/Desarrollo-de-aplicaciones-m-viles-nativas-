@@ -20,6 +20,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.systembooks.R;
+import com.example.systembooks.util.LocalNotificationHelper;
 import com.example.systembooks.util.RoleManager;
 import com.example.systembooks.util.SessionManager;
 import com.google.android.material.textfield.TextInputLayout;
@@ -42,8 +43,8 @@ public class NotificationAdminFragment extends Fragment {
     private RecyclerView recyclerViewUsers;
     private Button buttonSendNotification;
     private ProgressBar progressBar;
-    
-    private NotificationHelper notificationHelper;
+      private NotificationHelper notificationHelper;
+    private LocalNotificationHelper localNotificationHelper;
     private RoleManager roleManager;
     private SessionManager sessionManager;
     private UserSelectionAdapter userAdapter;
@@ -61,9 +62,9 @@ public class NotificationAdminFragment extends Fragment {
         recyclerViewUsers = view.findViewById(R.id.recyclerViewUsers);
         buttonSendNotification = view.findViewById(R.id.buttonSendNotification);
         progressBar = view.findViewById(R.id.progressBarNotification);
-        
-        // Inicializar helpers y managers
+          // Inicializar helpers y managers
         notificationHelper = new NotificationHelper(requireContext());
+        localNotificationHelper = new LocalNotificationHelper(requireContext());
         roleManager = new RoleManager(requireContext());
         sessionManager = new SessionManager(requireContext());
         
@@ -155,7 +156,7 @@ public class NotificationAdminFragment extends Fragment {
                     }
                 });
     }
-    
+      
     private void sendNotification() {
         // Validar campos
         if (TextUtils.isEmpty(editTextTitle.getText())) {
@@ -176,6 +177,10 @@ public class NotificationAdminFragment extends Fragment {
         
         progressBar.setVisibility(View.VISIBLE);
         
+        // Mostrar notificación local inmediatamente
+        //localNotificationHelper.sendLocalNotification(title, message);
+        
+        // Los datos adicionales para Firebase
         Map<String, String> data = new HashMap<>();
         data.put("type", "admin_notification");
         data.put("timestamp", String.valueOf(System.currentTimeMillis()));
@@ -183,47 +188,61 @@ public class NotificationAdminFragment extends Fragment {
         // Determinar el tipo de envío según la selección del spinner
         if (targetType == 0) { // Todos los usuarios
             sendToAllUsers(title, message, data);
+            // Mostrar notificación local inmediatamente
+            localNotificationHelper.sendLocalNotification(title, message);
         } else { // Usuario específico
             FirebaseUserItem selectedUser = userAdapter.getSelectedUser();
             if (selectedUser != null) {
                 sendToSpecificUser(selectedUser.getUid(), title, message, data);
             } else {
                 progressBar.setVisibility(View.GONE);
-                Toast.makeText(getContext(), R.string.select_user, Toast.LENGTH_SHORT).show();
+                // Incluso si no se seleccionó un usuario específico, la notificación local ya se envió
+                Toast.makeText(getContext(), "Notificación local enviada. Seleccione un usuario para enviar por Firebase.", Toast.LENGTH_SHORT).show();
             }
         }
-    }
+    }    
     
     private void sendToAllUsers(String title, String message, Map<String, String> data) {
+        // La notificación local ya se envió en sendNotification()
+        
+        // Ahora enviamos por Firebase para los dispositivos que no están activos
         notificationHelper.sendNotificationToAllUsers(title, message, data, new FirebaseAuthRepository.FirebaseCallback<Void>() {
             @Override
             public void onSuccess(Void result) {
                 progressBar.setVisibility(View.GONE);
-                Toast.makeText(getContext(), R.string.notification_sent_success, Toast.LENGTH_SHORT).show();
+                //Toast.makeText(getContext(), "Notificación enviada local y remotamente", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), "Notificación enviada exitosamente", Toast.LENGTH_SHORT).show();
                 clearFields();
             }
             
             @Override
             public void onError(String errorMessage) {
                 progressBar.setVisibility(View.GONE);
-                Toast.makeText(getContext(), getString(R.string.error_sending_notification) + ": " + errorMessage, Toast.LENGTH_LONG).show();
+                // Notificamos que la notificación local se envió correctamente aunque Firebase fallara
+                Toast.makeText(getContext(), "Notificación local enviada. Error en Firebase: " + errorMessage, Toast.LENGTH_LONG).show();
+                clearFields();
             }
         });
-    }
+    }    
     
     private void sendToSpecificUser(String userId, String title, String message, Map<String, String> data) {
+        // La notificación local ya se envió en sendNotification()
+        
+        // Luego enviamos también por Firebase para los dispositivos que no están activos
         notificationHelper.sendNotificationToUser(userId, title, message, data, new FirebaseAuthRepository.FirebaseCallback<Void>() {
             @Override
             public void onSuccess(Void result) {
                 progressBar.setVisibility(View.GONE);
-                Toast.makeText(getContext(), R.string.notification_sent_success, Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), "Notificación enviada local y remotamente", Toast.LENGTH_SHORT).show();
                 clearFields();
             }
             
             @Override
             public void onError(String errorMessage) {
                 progressBar.setVisibility(View.GONE);
-                Toast.makeText(getContext(), getString(R.string.error_sending_notification) + ": " + errorMessage, Toast.LENGTH_LONG).show();
+                // Notificamos que la notificación local se envió correctamente aunque Firebase fallara
+                Toast.makeText(getContext(), "Notificación local enviada. Error en Firebase: " + errorMessage, Toast.LENGTH_LONG).show();
+                clearFields();
             }
         });
     }

@@ -20,7 +20,9 @@ import android.widget.ListView
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.widget.SwitchCompat
+import android.widget.RadioGroup
+import android.widget.RadioButton
+import android.util.Log
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -34,23 +36,24 @@ import com.example.puzzle.util.ThemeManager
  * Actividad para gestionar la configuración del modo multijugador y establecer conexiones Bluetooth.
  */
 class MultiplayerActivity : AppCompatActivity(), GameSyncManager.OnConnectionEventListener {
-    
-    companion object {
+      companion object {
+        private const val TAG = "MultiplayerActivity"
         private const val REQUEST_ENABLE_BT = 1
         private const val REQUEST_PERMISSIONS = 2
-        
-        // Permisos necesarios para Bluetooth en Android 12+
+          // Permisos necesarios para Bluetooth en Android 12+
         private val REQUIRED_PERMISSIONS = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             arrayOf(
                 Manifest.permission.BLUETOOTH_SCAN,
                 Manifest.permission.BLUETOOTH_CONNECT,
-                Manifest.permission.ACCESS_FINE_LOCATION
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_COARSE_LOCATION
             )
         } else {
             arrayOf(
                 Manifest.permission.BLUETOOTH,
                 Manifest.permission.BLUETOOTH_ADMIN,
-                Manifest.permission.ACCESS_FINE_LOCATION
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_COARSE_LOCATION
             )
         }
     }
@@ -60,7 +63,9 @@ class MultiplayerActivity : AppCompatActivity(), GameSyncManager.OnConnectionEve
     private lateinit var scanButton: Button
     private lateinit var hostButton: Button
     private lateinit var progressBar: ProgressBar
-    private lateinit var gameModeToggle: SwitchCompat
+    private lateinit var gameModeRadioGroup: RadioGroup
+    private lateinit var cooperativeRadioButton: RadioButton
+    private lateinit var competitiveRadioButton: RadioButton
     
     // Bluetooth y sincronización
     private lateinit var gameSyncManager: GameSyncManager
@@ -82,12 +87,15 @@ class MultiplayerActivity : AppCompatActivity(), GameSyncManager.OnConnectionEve
             finish()
         }
     }
-    
-    // Receiver para detectar dispositivos Bluetooth
+      // Receiver para detectar dispositivos Bluetooth
     private val receiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
+            Log.d(TAG, "BroadcastReceiver onReceive: ${intent.action}")
+            
             when(intent.action) {
                 BluetoothDevice.ACTION_FOUND -> {
+                    Log.d(TAG, "Dispositivo Bluetooth encontrado")
+                    
                     // Dispositivo encontrado
                     val device = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                         intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE, BluetoothDevice::class.java)
@@ -97,26 +105,62 @@ class MultiplayerActivity : AppCompatActivity(), GameSyncManager.OnConnectionEve
                     }
                     
                     device?.let {
+                        Log.d(TAG, "Procesando dispositivo: ${it.address}")
+                        
                         // Comprobar permisos antes de acceder al nombre
-                        val deviceName = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && ActivityCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+                        val deviceName = try {
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                                if (ActivityCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT) == PackageManager.PERMISSION_GRANTED) {
+                                    it.name ?: "Dispositivo desconocido"
+                                } else {
+                                    Log.w(TAG, "Permiso BLUETOOTH_CONNECT no concedido")
+                                    "Dispositivo desconocido"
+                                }
+                            } else {
+                                it.name ?: "Dispositivo desconocido"
+                            }
+                        } catch (e: SecurityException) {
+                            Log.e(TAG, "Error de seguridad al acceder al nombre del dispositivo", e)
                             "Dispositivo desconocido"
-                        } else {
-                            it.name ?: "Dispositivo desconocido"
                         }
                         
                         if (!devicesList.contains(it)) {
                             devicesList.add(it)
-                            deviceListAdapter.add("$deviceName\\n${it.address}")
+                            val displayText = "$deviceName\n${it.address}"
+                            deviceListAdapter.add(displayText)
+                            deviceListAdapter.notifyDataSetChanged()
+                            
+                            // Hacer visible la lista de dispositivos
+                            deviceListView.visibility = View.VISIBLE
+                            
+                            Log.d(TAG, "Dispositivo añadido: $deviceName (${it.address})")
+                        } else {
+                            Log.d(TAG, "Dispositivo ya existe en la lista: ${it.address}")
                         }
-                    }
+                    } ?: Log.w(TAG, "Dispositivo es null en ACTION_FOUND")
                 }
+                
+                BluetoothAdapter.ACTION_DISCOVERY_STARTED -> {
+                    Log.d(TAG, "Descubrimiento de dispositivos iniciado")
+                    progressBar.visibility = View.VISIBLE
+                    scanButton.isEnabled = false
+                    updateConnectionStatus(getString(R.string.status_scanning))
+                }
+                
                 BluetoothAdapter.ACTION_DISCOVERY_FINISHED -> {
-                    setProgressBarIndeterminate(false)
+                    Log.d(TAG, "Descubrimiento de dispositivos finalizado. Dispositivos encontrados: ${devicesList.size}")
+                    
+                    progressBar.visibility = View.GONE
+                    scanButton.isEnabled = true
+                    scanButton.text = getString(R.string.btn_scan_again)
+                    
                     if (devicesList.isEmpty()) {
                         Toast.makeText(context, R.string.no_devices_found, Toast.LENGTH_SHORT).show()
+                        deviceListView.visibility = View.GONE
+                        updateConnectionStatus(getString(R.string.status_not_connected))
+                    } else {
+                        updateConnectionStatus("${devicesList.size} dispositivos encontrados")
                     }
-                    scanButton.text = getString(R.string.btn_scan_again)
-                    scanButton.isEnabled = true
                 }
             }
         }
@@ -132,15 +176,19 @@ class MultiplayerActivity : AppCompatActivity(), GameSyncManager.OnConnectionEve
         
         // Configurar la barra de acción
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        supportActionBar?.title = getString(R.string.multiplayer_title)
-          // Inicializar elementos de UI
+        supportActionBar?.title = getString(R.string.multiplayer_title)        // Inicializar elementos de UI
         statusText = findViewById(R.id.statusTextView)
         deviceListView = findViewById(R.id.deviceListView)
         scanButton = findViewById(R.id.scanButton)
         hostButton = findViewById(R.id.hostButton)
         progressBar = findViewById(R.id.progressBar)
-        gameModeToggle = findViewById(R.id.gameModeToggle)
+        gameModeRadioGroup = findViewById(R.id.gameModeRadioGroup)
+        cooperativeRadioButton = findViewById(R.id.cooperativeRadioButton)
+        competitiveRadioButton = findViewById(R.id.competitiveRadioButton)
         
+        // Establecer modo cooperativo por defecto
+        cooperativeRadioButton.isChecked = true
+
         // Configurar el adaptador para la lista de dispositivos
         deviceListAdapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, ArrayList())
         deviceListView.adapter = deviceListAdapter
@@ -181,13 +229,11 @@ class MultiplayerActivity : AppCompatActivity(), GameSyncManager.OnConnectionEve
         // Configurar botón de host
         hostButton.setOnClickListener {
             startHosting()
-        }
-          // Configurar toggle de modo de juego
-        gameModeToggle.setOnCheckedChangeListener { _, isChecked ->
-            val mode = if (isChecked) {
-                com.example.puzzle.bluetooth.BluetoothManager.GAME_MODE_COMPETITIVE
-            } else {
-                com.example.puzzle.bluetooth.BluetoothManager.GAME_MODE_COOPERATIVE
+        }        // Configurar toggle de modo de juego
+        gameModeRadioGroup.setOnCheckedChangeListener { _, checkedId ->
+            val mode = when (checkedId) {
+                R.id.competitiveRadioButton -> com.example.puzzle.bluetooth.BluetoothManager.GAME_MODE_COMPETITIVE
+                else -> com.example.puzzle.bluetooth.BluetoothManager.GAME_MODE_COOPERATIVE
             }
             gameSyncManager.setGameMode(mode)
         }
@@ -230,58 +276,109 @@ class MultiplayerActivity : AppCompatActivity(), GameSyncManager.OnConnectionEve
             setupBluetooth()
         }
     }
-    
-    /**
+      /**
      * Configura Bluetooth una vez confirmado que está disponible y activo
      */
     private fun setupBluetooth() {
-        // Configurar nuestro dispositivo para ser detectable
+        Log.d(TAG, "Configurando Bluetooth...")
+        
+        // Verificar permisos de nuevo
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+                Log.e(TAG, "Permiso BLUETOOTH_CONNECT no concedido en setupBluetooth")
                 return
             }
         }
         
         // Registrar BroadcastReceiver para descubrimiento de dispositivos
-        val filter = IntentFilter(BluetoothDevice.ACTION_FOUND)
-        filter.addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED)
-        registerReceiver(receiver, filter)
+        val filter = IntentFilter().apply {
+            addAction(BluetoothDevice.ACTION_FOUND)
+            addAction(BluetoothAdapter.ACTION_DISCOVERY_STARTED)
+            addAction(BluetoothAdapter.ACTION_DISCOVERY_FINISHED)
+        }
+        
+        try {
+            registerReceiver(receiver, filter)
+            Log.d(TAG, "BroadcastReceiver registrado exitosamente")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error al registrar BroadcastReceiver", e)
+        }
         
         // Actualizar UI inicial
         updateConnectionStatus(getString(R.string.status_not_connected))
         scanButton.isEnabled = true
         hostButton.isEnabled = true
+        
+        Log.d(TAG, "Bluetooth configurado correctamente")
     }
-    
-    /**
+      /**
      * Inicia el escaneo de dispositivos Bluetooth
      */
     private fun scanForDevices() {
+        Log.d(TAG, "Iniciando escaneo de dispositivos Bluetooth...")
+        
         // Limpiar lista anterior
         devicesList.clear()
         deviceListAdapter.clear()
         deviceListAdapter.notifyDataSetChanged()
+        deviceListView.visibility = View.GONE
         
         // Cancelar cualquier descubrimiento en progreso
         if (::bluetoothAdapter.isInitialized) {
-            if (bluetoothAdapter.isDiscovering) {
-                bluetoothAdapter.cancelDiscovery()
-            }
-            
-            // Verificar permisos antes de iniciar descubrimiento
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED) {
-                    Toast.makeText(this, R.string.bluetooth_permission_required, Toast.LENGTH_SHORT).show()
+            try {
+                if (bluetoothAdapter.isDiscovering) {
+                    Log.d(TAG, "Cancelando descubrimiento anterior...")
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_SCAN) == PackageManager.PERMISSION_GRANTED) {
+                            bluetoothAdapter.cancelDiscovery()
+                        }
+                    } else {
+                        bluetoothAdapter.cancelDiscovery()
+                    }
+                }
+                
+                // Verificar permisos antes de iniciar descubrimiento
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    if (ActivityCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_SCAN) != PackageManager.PERMISSION_GRANTED) {
+                        Log.e(TAG, "Permiso BLUETOOTH_SCAN no concedido")
+                        Toast.makeText(this, R.string.bluetooth_permission_required, Toast.LENGTH_SHORT).show()
+                        return
+                    }
+                }
+                
+                // Verificar que Bluetooth esté habilitado
+                if (!bluetoothAdapter.isEnabled) {
+                    Log.e(TAG, "Bluetooth no está habilitado")
+                    Toast.makeText(this, R.string.bluetooth_not_enabled, Toast.LENGTH_SHORT).show()
                     return
                 }
+                
+                Log.d(TAG, "Iniciando startDiscovery()...")
+                
+                // Iniciar descubrimiento
+                val discoveryStarted = bluetoothAdapter.startDiscovery()
+                
+                if (discoveryStarted) {
+                    Log.d(TAG, "Descubrimiento iniciado exitosamente")
+                    progressBar.visibility = View.VISIBLE
+                    scanButton.isEnabled = false
+                    scanButton.text = "Scanning..."
+                    updateConnectionStatus(getString(R.string.status_scanning))                } else {
+                    Log.e(TAG, "Error: startDiscovery() retornó false")
+                    Toast.makeText(this, "Failed to start device discovery", Toast.LENGTH_SHORT).show()
+                    updateConnectionStatus(getString(R.string.status_not_connected))
+                }
+                
+            } catch (e: SecurityException) {
+                Log.e(TAG, "Error de permisos durante el escaneo", e)
+                Toast.makeText(this, R.string.bluetooth_permission_required, Toast.LENGTH_SHORT).show()
+            } catch (e: Exception) {
+                Log.e(TAG, "Error inesperado durante el escaneo", e)
+                Toast.makeText(this, "Error starting Bluetooth discovery: ${e.message}", Toast.LENGTH_SHORT).show()
             }
-            
-            // Iniciar descubrimiento
-            if (bluetoothAdapter.startDiscovery()) {
-                progressBar.visibility = View.VISIBLE
-                scanButton.isEnabled = false
-                updateConnectionStatus(getString(R.string.status_scanning))
-            }
+        } else {
+            Log.e(TAG, "bluetoothAdapter no está inicializado")
+            Toast.makeText(this, "Bluetooth adapter not initialized", Toast.LENGTH_SHORT).show()
         }
     }
     
@@ -336,11 +433,10 @@ class MultiplayerActivity : AppCompatActivity(), GameSyncManager.OnConnectionEve
     /**
      * Inicia la actividad de juego multijugador después de establecer conexión
      */
-    private fun startMultiplayerGame(deviceName: String) {
-        // Pasar datos del juego multijugador a MultiplayerGameActivity
+    private fun startMultiplayerGame(deviceName: String) {        // Pasar datos del juego multijugador a MultiplayerGameActivity
         val intent = Intent(this, MultiplayerGameActivity::class.java)
         intent.putExtra("deviceName", deviceName)
-        intent.putExtra("gameMode", gameModeToggle.isChecked)
+        intent.putExtra("gameMode", competitiveRadioButton.isChecked)
         startActivity(intent)
     }
     
