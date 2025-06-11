@@ -53,7 +53,7 @@ Asegúrate de que todos los checkmarks estén en verde.
 ### 1. Clonar el repositorio
 
 ```bash
-git clone https://github.com/[tu-usuario]/simple-ar-app.git
+git clone https://github.com/GUSTAVOIVANGQ/Desarrollo-de-aplicaciones-m-viles-nativas-/tree/main/Tarea_6_Desarrollo_de_una_Aplicacion_de_Realidad_Aumentada/RA/simple_ar_app.git
 cd simple-ar-app
 ```
 
@@ -321,9 +321,9 @@ Este proyecto está bajo la Licencia MIT. Ver el archivo [LICENSE](LICENSE) para
 
 ## 👨‍💻 Autor
 
-**[Tu Nombre]**
-- GitHub: [@tu-usuario](https://github.com/tu-usuario)
-- Email: tu-email@ejemplo.com
+**Gustavo Ivan Garcia Quiroz**
+- GitHub: [@GUSTAVOIVANGQ](https://github.com/GUSTAVOIVANGQ)
+- Email: ggarciaq1800@alumno.ipn.mx
 
 ## 🙏 Agradecimientos
 
