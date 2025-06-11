@@ -97,6 +97,7 @@ flutter run
 1. Abre la aplicación
 2. Toca **"Abrir Cámara AR"**
 3. Concede permisos de cámara cuando se solicite
+![image](https://github.com/user-attachments/assets/4b7c1486-7853-435d-bbd2-41bcb7bfd500)
 
 ### Vista AR
 1. **Mostrar modelo**: Toca el botón azul con ícono de AR 👁️
@@ -105,6 +106,10 @@ flutter run
    - Usa los botones **+** (verde) y **-** (naranja)
 4. **Colocar en escena**: Toca el botón púrpura 📍 para fijar el modelo
 5. **Cambiar modelo**: Toca el botón de intercambio ↔️ en la parte superior
+![image](https://github.com/user-attachments/assets/e9b78942-467d-4a4a-a724-2ef4a09b0686)
+![image](https://github.com/user-attachments/assets/ee615fb1-6d53-4169-8d99-7fef95828d36)
+![image](https://github.com/user-attachments/assets/4a60768f-6bf6-42fc-a357-cfd816bda230)
+![image](https://github.com/user-attachments/assets/784b26cf-db00-4945-a609-846796f69836)
 
 ### Indicadores Visuales
 - **Borde azul**: Modelo visible pero no colocado
