@@ -14,10 +14,11 @@ class _ARCameraScreenState extends State<ARCameraScreen>
   bool _isCameraInitialized = false;
   bool _showModel = false;
   String _currentModel = '';
-
   // Posición del modelo 3D
   Offset _modelPosition = Offset(0.5, 0.5);
   double _modelScale = 1.0;
+  bool _isModelPlaced =
+      false; // Controla si el modelo está colocado en la escena
 
   // Animaciones
   late AnimationController _scaleController;
@@ -90,8 +91,28 @@ class _ARCameraScreenState extends State<ARCameraScreen>
         _scaleController.forward();
       } else {
         _scaleController.reverse();
+        _isModelPlaced = false; // Reset cuando se oculta el modelo
       }
     });
+  }
+
+  void _placeModel() {
+    setState(() {
+      _isModelPlaced = !_isModelPlaced;
+    });
+
+    // Mostrar mensaje de confirmación
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          _isModelPlaced
+              ? '¡Modelo colocado en la escena!'
+              : 'Modelo removido de la escena',
+        ),
+        duration: Duration(seconds: 2),
+        backgroundColor: _isModelPlaced ? Colors.green : Colors.orange,
+      ),
+    );
   }
 
   void _changeModel() {
@@ -157,54 +178,49 @@ class _ARCameraScreenState extends State<ARCameraScreen>
           // Vista de la cámara
           Positioned.fill(child: CameraPreview(_cameraController!)),
 
-          // Modelo 3D superpuesto
+          // Modelo 3D superpuesto con rotación integrada
           if (_showModel)
             AnimatedBuilder(
               animation: _scaleController,
               builder: (context, child) {
                 return Positioned(
-                  left:
-                      MediaQuery.of(context).size.width * _modelPosition.dx -
+                  left: MediaQuery.of(context).size.width * _modelPosition.dx -
                       100,
-                  top:
-                      MediaQuery.of(context).size.height * _modelPosition.dy -
+                  top: MediaQuery.of(context).size.height * _modelPosition.dy -
                       100,
-                  child: GestureDetector(
-                    onPanUpdate: (details) {
-                      setState(() {
-                        _modelPosition = Offset(
-                          (_modelPosition.dx *
-                                      MediaQuery.of(context).size.width +
-                                  details.delta.dx) /
-                              MediaQuery.of(context).size.width,
-                          (_modelPosition.dy *
-                                      MediaQuery.of(context).size.height +
-                                  details.delta.dy) /
-                              MediaQuery.of(context).size.height,
-                        );
-                      });
-                    },
-                    child: Transform.scale(
-                      scale: _modelScale,
-                      child: Container(
+                  child: Container(
+                    decoration: BoxDecoration(
+                      border: _isModelPlaced
+                          ? Border.all(color: Colors.green, width: 3)
+                          : Border.all(
+                              color: Colors.blue.withOpacity(0.5), width: 2),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Transform(
+                      alignment: Alignment.center,
+                      transform: Matrix4.identity()..scale(_modelScale),
+                      child: SizedBox(
                         width: 200,
                         height: 200,
                         child: ModelViewer(
-                          backgroundColor: Colors.transparent,
                           src: _currentModel,
                           alt: "Modelo 3D",
-                          autoRotate: true,
-                          disableZoom: true,
-                          cameraControls: false,
+                          ar: false,
+                          autoRotate: false,
+                          cameraControls: true, // Permite rotación con gestos
+                          backgroundColor: Colors.transparent,
+                          disableZoom:
+                              true, // Deshabilitamos zoom del ModelViewer
+                          disablePan:
+                              true, // Deshabilitamos pan del ModelViewer
+                          interactionPrompt: InteractionPrompt.none,
                         ),
                       ),
                     ),
                   ),
                 );
               },
-            ),
-
-          // Controles superiores
+            ), // Controles superiores
           Positioned(
             top: MediaQuery.of(context).padding.top + 10,
             left: 10,
@@ -217,13 +233,34 @@ class _ARCameraScreenState extends State<ARCameraScreen>
                   icon: Icon(Icons.arrow_back, color: Colors.white),
                   style: IconButton.styleFrom(backgroundColor: Colors.black54),
                 ),
-                Text(
-                  'Simple AR Camera',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+                Column(
+                  children: [
+                    Text(
+                      'Simple AR Camera',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    if (_showModel && _isModelPlaced)
+                      Container(
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.green,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          '🎯 Modelo en escena',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
                 IconButton(
                   onPressed: _changeModel,
@@ -250,10 +287,18 @@ class _ARCameraScreenState extends State<ARCameraScreen>
                     _showModel ? Icons.visibility_off : Icons.view_in_ar,
                     color: Colors.white,
                   ),
-                ),
-
-                // Controles de escala
+                ), // Controles de escala y colocación
                 if (_showModel) ...[
+                  // Botón para colocar/remover modelo
+                  FloatingActionButton(
+                    onPressed: _placeModel,
+                    backgroundColor:
+                        _isModelPlaced ? Colors.purple : Colors.grey,
+                    child: Icon(
+                      _isModelPlaced ? Icons.place : Icons.add_location,
+                      color: Colors.white,
+                    ),
+                  ),
                   FloatingActionButton(
                     onPressed: () {
                       setState(() {
@@ -277,7 +322,7 @@ class _ARCameraScreenState extends State<ARCameraScreen>
             ),
           ),
 
-          // Instrucciones
+          // Instrucciones actualizadas
           if (_showModel)
             Positioned(
               top: MediaQuery.of(context).size.height * 0.3,
@@ -290,7 +335,7 @@ class _ARCameraScreenState extends State<ARCameraScreen>
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
-                  'Arrastra el modelo para moverlo\nUsa + y - para cambiar el tamaño',
+                  'Arrastra sobre el modelo para rotarlo\ny ver todas las caras\nBotones +/- para escalar\n${_isModelPlaced ? "📍 Modelo colocado en la escena" : "📍 Toca para colocar el modelo"}',
                   textAlign: TextAlign.center,
                   style: TextStyle(color: Colors.white, fontSize: 14),
                 ),
