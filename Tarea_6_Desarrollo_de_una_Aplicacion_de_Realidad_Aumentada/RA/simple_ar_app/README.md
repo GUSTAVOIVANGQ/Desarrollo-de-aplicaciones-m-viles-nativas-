@@ -106,6 +106,7 @@ flutter run
    - Usa los botones **+** (verde) y **-** (naranja)
 4. **Colocar en escena**: Toca el botón púrpura 📍 para fijar el modelo
 5. **Cambiar modelo**: Toca el botón de intercambio ↔️ en la parte superior
+
 ![image](https://github.com/user-attachments/assets/e9b78942-467d-4a4a-a724-2ef4a09b0686)
 ![image](https://github.com/user-attachments/assets/ee615fb1-6d53-4169-8d99-7fef95828d36)
 ![image](https://github.com/user-attachments/assets/4a60768f-6bf6-42fc-a357-cfd816bda230)
