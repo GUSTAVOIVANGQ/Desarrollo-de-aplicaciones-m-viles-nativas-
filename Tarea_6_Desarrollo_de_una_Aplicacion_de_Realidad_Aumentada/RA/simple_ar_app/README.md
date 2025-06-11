@@ -338,8 +338,8 @@ Este proyecto está bajo la Licencia MIT. Ver el archivo [LICENSE](LICENSE) para
 
 Si encuentras algún bug o tienes sugerencias:
 
-1. Revisa los [issues existentes](https://github.com/tu-usuario/simple-ar-app/issues)
-2. Si no existe, [crea un nuevo issue](https://github.com/tu-usuario/simple-ar-app/issues/new)
+1. Revisa los [issues existentes](https://github.com/GUSTAVOIVANGQ/Desarrollo-de-aplicaciones-m-viles-nativas-/issues)
+2. Si no existe, [crea un nuevo issue](https://github.com/GUSTAVOIVANGQ/Desarrollo-de-aplicaciones-m-viles-nativas-/issues/new)
 3. Proporciona la mayor información posible:
    - Versión de Flutter
    - Dispositivo utilizado
