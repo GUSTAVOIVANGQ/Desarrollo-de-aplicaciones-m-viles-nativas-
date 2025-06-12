@@ -53,7 +53,7 @@ Asegúrate de que todos los checkmarks estén en verde.
 ### 1. Clonar el repositorio
 
 ```bash
-git clone https://github.com/[tu-usuario]/simple-ar-app.git
+git clone https://github.com/GUSTAVOIVANGQ/Desarrollo-de-aplicaciones-m-viles-nativas-/tree/main/Tarea_6_Desarrollo_de_una_Aplicacion_de_Realidad_Aumentada/RA/simple_ar_app.git
 cd simple-ar-app
 ```
 
@@ -97,6 +97,7 @@ flutter run
 1. Abre la aplicación
 2. Toca **"Abrir Cámara AR"**
 3. Concede permisos de cámara cuando se solicite
+![image](https://github.com/user-attachments/assets/4b7c1486-7853-435d-bbd2-41bcb7bfd500)
 
 ### Vista AR
 1. **Mostrar modelo**: Toca el botón azul con ícono de AR 👁️
@@ -105,6 +106,11 @@ flutter run
    - Usa los botones **+** (verde) y **-** (naranja)
 4. **Colocar en escena**: Toca el botón púrpura 📍 para fijar el modelo
 5. **Cambiar modelo**: Toca el botón de intercambio ↔️ en la parte superior
+
+![image](https://github.com/user-attachments/assets/e9b78942-467d-4a4a-a724-2ef4a09b0686)
+![image](https://github.com/user-attachments/assets/ee615fb1-6d53-4169-8d99-7fef95828d36)
+![image](https://github.com/user-attachments/assets/4a60768f-6bf6-42fc-a357-cfd816bda230)
+![image](https://github.com/user-attachments/assets/784b26cf-db00-4945-a609-846796f69836)
 
 ### Indicadores Visuales
 - **Borde azul**: Modelo visible pero no colocado
@@ -321,9 +327,9 @@ Este proyecto está bajo la Licencia MIT. Ver el archivo [LICENSE](LICENSE) para
 
 ## 👨‍💻 Autor
 
-**[Tu Nombre]**
-- GitHub: [@tu-usuario](https://github.com/tu-usuario)
-- Email: tu-email@ejemplo.com
+**Gustavo Ivan Garcia Quiroz**
+- GitHub: [@GUSTAVOIVANGQ](https://github.com/GUSTAVOIVANGQ)
+- Email: ggarciaq1800@alumno.ipn.mx
 
 ## 🙏 Agradecimientos
 
@@ -338,8 +344,8 @@ Este proyecto está bajo la Licencia MIT. Ver el archivo [LICENSE](LICENSE) para
 
 Si encuentras algún bug o tienes sugerencias:
 
-1. Revisa los [issues existentes](https://github.com/tu-usuario/simple-ar-app/issues)
-2. Si no existe, [crea un nuevo issue](https://github.com/tu-usuario/simple-ar-app/issues/new)
+1. Revisa los [issues existentes](https://github.com/GUSTAVOIVANGQ/Desarrollo-de-aplicaciones-m-viles-nativas-/issues)
+2. Si no existe, [crea un nuevo issue](https://github.com/GUSTAVOIVANGQ/Desarrollo-de-aplicaciones-m-viles-nativas-/issues/new)
 3. Proporciona la mayor información posible:
    - Versión de Flutter
    - Dispositivo utilizado
