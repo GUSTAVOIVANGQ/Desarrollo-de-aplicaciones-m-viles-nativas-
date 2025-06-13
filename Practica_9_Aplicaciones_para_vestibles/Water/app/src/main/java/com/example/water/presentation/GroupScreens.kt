@@ -33,7 +33,8 @@ import kotlinx.coroutines.launch
 fun GroupsScreen(
     onBackClick: () -> Unit,
     onGroupSelected: (String) -> Unit,
-    onCreateGroup: () -> Unit
+    onCreateGroup: () -> Unit,
+    onViewUsers: () -> Unit
 ) {
     val context = LocalContext.current
     val coroutineScope = rememberCoroutineScope()
@@ -141,8 +142,7 @@ fun GroupsScreen(
             
             item {
                 Spacer(modifier = Modifier.height(8.dp))
-                
-                Chip(
+                  Chip(
                     onClick = onCreateGroup,
                     colors = ChipDefaults.chipColors(
                         backgroundColor = Color(0xFF4CAF50)
@@ -152,6 +152,20 @@ fun GroupsScreen(
                     },
                     icon = {
                         Icon(Icons.Default.Add, contentDescription = null)
+                    }
+                )
+            }
+              item {
+                Chip(
+                    onClick = onViewUsers,
+                    colors = ChipDefaults.chipColors(
+                        backgroundColor = Color(0xFF9C27B0)
+                    ),
+                    label = {
+                        Text("Ver usuarios")
+                    },
+                    icon = {
+                        Icon(Icons.Default.Person, contentDescription = null)
                     }
                 )
             }
@@ -488,6 +502,202 @@ fun GroupDetailScreen(
                     label = {
                         Text("Salir del grupo")
                     }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun AllUsersScreen(
+    onBackClick: () -> Unit
+) {
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    var isLoading by remember { mutableStateOf(true) }
+    var users by remember { mutableStateOf(emptyList<FriendData>()) }
+    
+    // Cargar todos los usuarios al iniciar
+    LaunchedEffect(Unit) {
+        GroupManager.loadAllAvailableUsers { success, message ->
+            isLoading = false
+            if (success) {
+                users = GroupManager.allAvailableUsers
+            } else {
+                Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+    
+    Scaffold(
+        vignette = { Vignette(vignettePosition = VignettePosition.TopAndBottom) },
+        positionIndicator = { PositionIndicator(scalingLazyListState = rememberScalingLazyListState()) }
+    ) {
+        ScalingLazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            item {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Button(
+                        onClick = onBackClick,
+                        modifier = Modifier.size(32.dp),
+                        colors = ButtonDefaults.buttonColors(backgroundColor = MaterialTheme.colors.surface)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.ArrowBack,
+                            contentDescription = "Volver",
+                            tint = MaterialTheme.colors.onSurface
+                        )
+                    }
+                    
+                    Spacer(modifier = Modifier.width(8.dp))
+                    
+                    Text(
+                        text = "🌐 Usuarios Online",
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
+            
+            item {
+                Text(
+                    text = "🟢 Todos conectados (${users.size})",
+                    fontSize = 14.sp,
+                    color = Color(0xFF4CAF50),
+                    modifier = Modifier.padding(vertical = 8.dp)
+                )
+            }
+            
+            if (isLoading) {
+                item {
+                    Box(
+                        modifier = Modifier.fillMaxWidth().padding(16.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
+                    }
+                }
+            } else if (users.isEmpty()) {
+                item {
+                    Text(
+                        text = "No hay usuarios disponibles",
+                        fontSize = 14.sp,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 16.dp)
+                    )
+                }
+            } else {
+                items(users) { user ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // Indicador de online (siempre verde para simular conexión)
+                        Box(
+                            modifier = Modifier
+                                .size(12.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFF4CAF50))
+                        )
+                        
+                        Spacer(modifier = Modifier.width(8.dp))
+                        
+                        // Avatar
+                        Box(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(CircleShape)
+                                .background(
+                                    if (user.id.startsWith("fictitious_")) 
+                                        Color(0xFF9C27B0) 
+                                    else 
+                                        Color(0xFF3F51B5)
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Person,
+                                contentDescription = null,
+                                tint = Color.White
+                            )
+                        }
+                        
+                        Spacer(modifier = Modifier.width(8.dp))
+                        
+                        // Información del usuario
+                        Column(
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = user.name.ifEmpty { "Usuario" },
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                
+                                if (user.id.startsWith("fictitious_")) {
+                                    Text(
+                                        text = "Demo",
+                                        fontSize = 10.sp,
+                                        color = Color(0xFF9C27B0),
+                                        modifier = Modifier
+                                            .background(
+                                                Color(0xFF9C27B0).copy(alpha = 0.1f),
+                                                RoundedCornerShape(4.dp)
+                                            )
+                                            .padding(horizontal = 4.dp, vertical = 1.dp)
+                                    )
+                                }
+                            }
+                            
+                            Text(
+                                text = "${user.dailyIntake}ml / ${user.dailyGoal}ml hoy",
+                                fontSize = 11.sp,
+                                color = MaterialTheme.colors.onSurface.copy(alpha = 0.7f)
+                            )
+                            
+                            if (user.email.isNotEmpty()) {
+                                Text(
+                                    text = user.email,
+                                    fontSize = 10.sp,
+                                    color = MaterialTheme.colors.onSurface.copy(alpha = 0.5f),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+            
+            item {
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                Text(
+                    text = "Los puntos verdes indican usuarios conectados en tiempo real. Los usuarios Demo son ejemplos ficticios.",
+                    fontSize = 10.sp,
+                    textAlign = TextAlign.Center,
+                    color = MaterialTheme.colors.onSurface.copy(alpha = 0.6f),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp)
                 )
             }
         }

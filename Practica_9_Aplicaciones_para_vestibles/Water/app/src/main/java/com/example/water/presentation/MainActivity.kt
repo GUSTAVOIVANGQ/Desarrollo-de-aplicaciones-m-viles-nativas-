@@ -54,6 +54,13 @@ import java.util.*
 import kotlin.random.Random
 
 class MainActivity : ComponentActivity() {
+    
+    companion object {
+        private var instance: MainActivity? = null
+        
+        fun getInstance(): MainActivity? = instance
+    }
+    
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted ->
@@ -72,6 +79,9 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // Asignar la instancia
+        instance = this
         
         // Solicitar permisos de notificación
         if (ContextCompat.checkSelfPermission(
@@ -182,7 +192,7 @@ class MainActivity : ComponentActivity() {
         }
         
         notificationHandler?.post(notificationRunnable!!)
-        Toast.makeText(this, "🔔 Notificaciones de prueba iniciadas (cada 30s)", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, "🔔 Notificaciones iniciadas (cada 30s)", Toast.LENGTH_SHORT).show()
     }
     
     fun stopLocalNotifications() {
@@ -192,7 +202,7 @@ class MainActivity : ComponentActivity() {
         }
         notificationHandler = null
         notificationRunnable = null
-        Toast.makeText(this, "🔕 Notificaciones de prueba detenidas", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, "🔕 Notificaciones detenidas", Toast.LENGTH_SHORT).show()
     }
     
     private fun sendLocalNotification() {
@@ -232,6 +242,7 @@ class MainActivity : ComponentActivity() {
     override fun onDestroy() {
         super.onDestroy()
         stopLocalNotifications()
+        instance = null
     }
 }
 
@@ -269,6 +280,9 @@ fun WearApp() {
                     },
                     onCreateGroup = {
                         navController.navigate("create_group")
+                    },
+                    onViewUsers = {
+                        navController.navigate("all_users")
                     }
                 )
             }
@@ -282,6 +296,11 @@ fun WearApp() {
                 val groupId = backStackEntry.arguments?.getString("groupId") ?: ""
                 GroupDetailScreen(
                     groupId = groupId,
+                    onBackClick = { navController.popBackStack() }
+                )
+            }
+            composable("all_users") {
+                AllUsersScreen(
                     onBackClick = { navController.popBackStack() }
                 )
             }
@@ -415,28 +434,34 @@ fun HomeScreen(
                     }
                 )
             }
-            
+
+            // Replace the navigation buttons section in HomeScreen with this:
             item {
-                // Botones de navegación
-                Row(
+                Column(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Chip(
-                        onClick = onStatsClick,
-                        modifier = Modifier.width(60.dp),
-                        label = { Text("Stats", fontSize = 10.sp) }
-                    )
-                    
-                    Chip(
-                        onClick = onGroupsClick,
-                        modifier = Modifier.width(60.dp),
-                        label = { Text("Grupos", fontSize = 10.sp) }
-                    )
-                    
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+                        Chip(
+                            onClick = onStatsClick,
+                            modifier = Modifier.width(80.dp),
+                            label = { Text("Stats", fontSize = 10.sp) }
+                        )
+                        Chip(
+                            onClick = onGroupsClick,
+                            modifier = Modifier.width(80.dp),
+                            label = { Text("Grupos", fontSize = 10.sp) }
+                        )
+                    }
                     Chip(
                         onClick = onSettingsClick,
-                        modifier = Modifier.width(60.dp),
+                        modifier = Modifier
+                            .width(80.dp)
+                            .padding(top = 4.dp),
                         label = {
                             Icon(Icons.Default.Settings, contentDescription = "Settings")
                         }
@@ -541,6 +566,53 @@ fun SettingsScreen(onBackClick: () -> Unit) {
                         label = { Text("+1h", fontSize = 10.sp) }
                     )
                 }
+            }
+            
+            // Botón de notificaciones de prueba
+            item {
+                val mainActivity = MainActivity.getInstance()
+                var isNotificationRunning by remember { mutableStateOf(false) }
+                
+                Text(
+                    text = "🧪 Prueba de Notificaciones",
+                    fontSize = 12.sp,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
+                )
+                
+                Chip(
+                    onClick = {
+                        mainActivity?.let { activity ->
+                            if (isNotificationRunning) {
+                                activity.stopLocalNotifications()
+                                isNotificationRunning = false
+                            } else {
+                                activity.startLocalNotifications()
+                                isNotificationRunning = true
+                            }
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ChipDefaults.chipColors(
+                        backgroundColor = if (isNotificationRunning) AppColors.Red else AppColors.Green
+                    ),
+                    label = {
+                        Row(
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = if (isNotificationRunning) Icons.Default.NotificationsOff else Icons.Default.Notifications,
+                                contentDescription = null
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = if (isNotificationRunning) "Detener Notificaciones" else "Notificaciones cada 30s",
+                                fontSize = 10.sp
+                            )
+                        }
+                    }
+                )
             }
             
             item {

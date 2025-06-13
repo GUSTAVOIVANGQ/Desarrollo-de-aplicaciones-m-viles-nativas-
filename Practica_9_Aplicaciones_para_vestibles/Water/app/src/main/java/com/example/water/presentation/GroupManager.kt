@@ -37,6 +37,10 @@ object GroupManager {
     private val _onlineFriends = MutableStateFlow(0)
     val onlineFriends: StateFlow<Int> = _onlineFriends
     
+    // Lista de todos los usuarios disponibles (Firebase + ficticios)
+    private val _allAvailableUsers = mutableStateListOf<FriendData>()
+    val allAvailableUsers: List<FriendData> = _allAvailableUsers
+    
     fun getCurrentUserId(): String {
         return auth.currentUser?.uid ?: ""
     }
@@ -217,8 +221,7 @@ object GroupManager {
                 onComplete(false, "Error al unirse al grupo: ${e.message}")
             }
     }
-    
-    fun leaveGroup(groupId: String, onComplete: (Boolean, String) -> Unit) {
+      fun leaveGroup(groupId: String, onComplete: (Boolean, String) -> Unit) {
         val currentUserId = getCurrentUserId()
         if (currentUserId.isEmpty()) {
             onComplete(false, "Usuario no autenticado")
@@ -237,6 +240,82 @@ object GroupManager {
             }
             .addOnFailureListener { e ->
                 onComplete(false, "Error al salir del grupo: ${e.message}")
+            }
+    }
+    
+    /**
+     * Carga todos los usuarios disponibles desde Firebase más usuarios ficticios
+     * con puntos verdes que simulan conexión en tiempo real
+     */
+    fun loadAllAvailableUsers(onComplete: (Boolean, String) -> Unit) {
+        _allAvailableUsers.clear()
+        
+        // Primero agregar usuarios ficticios
+        val fictitiousUsers = listOf(
+            FriendData(
+                id = "fictitious_1",
+                name = "Ana Martínez",
+                email = "ana.martinez@ejemplo.com",
+                isOnline = true,
+                dailyIntake = 1200,
+                dailyGoal = 2000,
+                lastActive = System.currentTimeMillis()
+            ),
+            FriendData(
+                id = "fictitious_2", 
+                name = "Carlos López",
+                email = "carlos.lopez@ejemplo.com",
+                isOnline = true,
+                dailyIntake = 1800,
+                dailyGoal = 2500,
+                lastActive = System.currentTimeMillis()
+            )
+        )
+        
+        _allAvailableUsers.addAll(fictitiousUsers)
+        
+        // Luego cargar usuarios de Firebase
+        firestore.collection("users")
+            .get()
+            .addOnSuccessListener { documents ->
+                for (document in documents) {
+                    try {
+                        val userData = document.toObject(FriendData::class.java).copy(
+                            id = document.id,
+                            // Simular conexión en tiempo real - todos aparecen online
+                            isOnline = true,
+                            lastActive = System.currentTimeMillis()
+                        )
+                        
+                        // No agregar usuario ficticio duplicado o usuario actual
+                        val currentUserId = getCurrentUserId()
+                        if (!userData.id.startsWith("fictitious_") && userData.id != currentUserId) {
+                            _allAvailableUsers.add(userData)
+                        }
+                    } catch (e: Exception) {
+                        // Si hay error al convertir el documento, crear un usuario básico
+                        val basicUser = FriendData(
+                            id = document.id,
+                            name = document.get("username") as? String ?: "Usuario",
+                            email = document.get("email") as? String ?: "",
+                            isOnline = true,
+                            dailyIntake = (document.get("dailyIntake") as? Long)?.toInt() ?: 0,
+                            dailyGoal = (document.get("dailyGoal") as? Long)?.toInt() ?: 2000,
+                            lastActive = System.currentTimeMillis()
+                        )
+                        
+                        val currentUserId = getCurrentUserId()
+                        if (basicUser.id != currentUserId) {
+                            _allAvailableUsers.add(basicUser)
+                        }
+                    }
+                }
+                
+                onComplete(true, "Usuarios cargados: ${_allAvailableUsers.size}")
+            }
+            .addOnFailureListener { e ->
+                // Si falla la carga de Firebase, al menos tenemos los usuarios ficticios
+                onComplete(true, "Cargados usuarios ficticios (${fictitiousUsers.size}). Error en Firebase: ${e.message}")
             }
     }
 }
