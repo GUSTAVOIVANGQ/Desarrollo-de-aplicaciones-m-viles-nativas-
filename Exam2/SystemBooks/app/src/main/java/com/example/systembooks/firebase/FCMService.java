@@ -28,7 +28,8 @@ public class FCMService extends FirebaseMessagingService {
     private static final String TAG = "FCMService";
     private static final String CHANNEL_ID = "SystemBooksChannel";
     private static final String CHANNEL_NAME = "SystemBooks Notifications";
-    private static final String CHANNEL_DESC = "Notifications from SystemBooks app";    @Override
+    private static final String CHANNEL_DESC = "Notifications from SystemBooks app";    
+    @Override
     public void onNewToken(@NonNull String token) {
         super.onNewToken(token);
         Log.d(TAG, "New FCM token received: " + token.substring(0, Math.min(token.length(), 10)) + "...");
@@ -54,7 +55,8 @@ public class FCMService extends FirebaseMessagingService {
         // Información de depuración adicional
         String messageId = remoteMessage.getMessageId();
         String notificationId = remoteMessage.getData().get("notificationId");
-        Log.d(TAG, "Message ID: " + messageId + ", Notification ID: " + notificationId);
+        String notificationType = remoteMessage.getData().get("type");
+        Log.d(TAG, "Message ID: " + messageId + ", Notification ID: " + notificationId + ", Type: " + notificationType);
         
         // Check if the message contains data
         if (remoteMessage.getData().size() > 0) {
@@ -67,8 +69,15 @@ public class FCMService extends FirebaseMessagingService {
             String body = remoteMessage.getNotification().getBody();
             Log.d(TAG, "Message notification - Title: " + title + ", Body: " + body);
             
-            // Mostrar la notificación
-            sendNotification(title, body);
+            // Customize notification based on type
+            if ("friend_request".equals(notificationType)) {
+                sendFriendRequestNotification(title, body, remoteMessage.getData());
+            } else if ("friend_request_accepted".equals(notificationType)) {
+                sendFriendRequestAcceptedNotification(title, body, remoteMessage.getData());
+            } else {
+                // Mostrar la notificación normal
+                sendNotification(title, body);
+            }
             
             // Enviar confirmación a Firestore para seguimiento (opcional)
             if (notificationId != null) {
@@ -80,7 +89,14 @@ public class FCMService extends FirebaseMessagingService {
             String body = remoteMessage.getData().getOrDefault("body", "Nueva notificación");
             Log.d(TAG, "Created notification from data - Title: " + title + ", Body: " + body);
             
-            sendNotification(title, body);
+            // Customize notification based on type
+            if ("friend_request".equals(notificationType)) {
+                sendFriendRequestNotification(title, body, remoteMessage.getData());
+            } else if ("friend_request_accepted".equals(notificationType)) {
+                sendFriendRequestAcceptedNotification(title, body, remoteMessage.getData());
+            } else {
+                sendNotification(title, body);
+            }
         }
     }
     
@@ -205,5 +221,109 @@ public class FCMService extends FirebaseMessagingService {
                 Log.e(TAG, "Error saving token locally", e);
             }
         }
+    }
+
+    /**
+     * Send a friend request notification
+     * @param title Notification title
+     * @param body Notification body text
+     * @param data Additional data from FCM
+     */
+    private void sendFriendRequestNotification(String title, String body, Map<String, String> data) {
+        Intent intent = new Intent(this, MainActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        intent.putExtra("open_friends", true);
+        intent.putExtra("notification_type", "friend_request");
+
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 
+                (int) System.currentTimeMillis(),
+                intent,
+                PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
+
+        Uri defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+        NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+
+        // Create notification channel for Android Oreo+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel channel = new NotificationChannel(
+                    CHANNEL_ID,
+                    CHANNEL_NAME,
+                    NotificationManager.IMPORTANCE_HIGH);
+            channel.setDescription(CHANNEL_DESC);
+            channel.enableVibration(true);
+            channel.setVibrationPattern(new long[]{0, 250, 250, 250});
+            channel.enableLights(true);
+            channel.setLockscreenVisibility(android.app.Notification.VISIBILITY_PUBLIC);
+            notificationManager.createNotificationChannel(channel);
+        }
+
+        // Build the notification with high priority and friend request styling
+        NotificationCompat.Builder notificationBuilder =
+                new NotificationCompat.Builder(this, CHANNEL_ID)
+                        .setSmallIcon(R.drawable.ic_friends)
+                        .setContentTitle(title)
+                        .setContentText(body)
+                        .setStyle(new NotificationCompat.BigTextStyle().bigText(body))
+                        .setAutoCancel(true)
+                        .setSound(defaultSoundUri)
+                        .setPriority(NotificationCompat.PRIORITY_HIGH)
+                        .setContentIntent(pendingIntent)
+                        .setVibrate(new long[]{0, 250, 250, 250});
+
+        // Show the notification with unique ID
+        int notificationId = (int) System.currentTimeMillis();
+        notificationManager.notify(notificationId, notificationBuilder.build());
+    }
+
+    /**
+     * Send a friend request accepted notification
+     * @param title Notification title
+     * @param body Notification body text
+     * @param data Additional data from FCM
+     */
+    private void sendFriendRequestAcceptedNotification(String title, String body, Map<String, String> data) {
+        Intent intent = new Intent(this, MainActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        intent.putExtra("open_friends", true);
+        intent.putExtra("notification_type", "friend_request_accepted");
+
+        PendingIntent pendingIntent = PendingIntent.getActivity(this, 
+                (int) System.currentTimeMillis(),
+                intent,
+                PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
+
+        Uri defaultSoundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+        NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+
+        // Create notification channel for Android Oreo+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationChannel channel = new NotificationChannel(
+                    CHANNEL_ID,
+                    CHANNEL_NAME,
+                    NotificationManager.IMPORTANCE_HIGH);
+            channel.setDescription(CHANNEL_DESC);
+            channel.enableVibration(true);
+            channel.setVibrationPattern(new long[]{0, 250, 250, 250});
+            channel.enableLights(true);
+            channel.setLockscreenVisibility(android.app.Notification.VISIBILITY_PUBLIC);
+            notificationManager.createNotificationChannel(channel);
+        }
+
+        // Build the notification with high priority and acceptance styling
+        NotificationCompat.Builder notificationBuilder =
+                new NotificationCompat.Builder(this, CHANNEL_ID)
+                        .setSmallIcon(R.drawable.ic_friends)
+                        .setContentTitle(title)
+                        .setContentText(body)
+                        .setStyle(new NotificationCompat.BigTextStyle().bigText(body))
+                        .setAutoCancel(true)
+                        .setSound(defaultSoundUri)
+                        .setPriority(NotificationCompat.PRIORITY_HIGH)
+                        .setContentIntent(pendingIntent)
+                        .setVibrate(new long[]{0, 250, 250, 250});
+
+        // Show the notification with unique ID
+        int notificationId = (int) System.currentTimeMillis();
+        notificationManager.notify(notificationId, notificationBuilder.build());
     }
 }

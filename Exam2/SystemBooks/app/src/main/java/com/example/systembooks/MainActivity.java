@@ -59,6 +59,9 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         NavigationView navigationView = findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
         
+        // Handle notification intent
+        handleNotificationIntent(getIntent());
+        
         // Set up the hamburger icon to open/close drawer
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(this, drawer, toolbar,
                 R.string.navigation_drawer_open, R.string.navigation_drawer_close);
@@ -158,6 +161,14 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
             // No cargar ningún fragmento ya que estamos iniciando otra actividad
             drawer.closeDrawer(GravityCompat.START);
             return true;
+        } else if (id == R.id.nav_friends) {
+            // Sistema de amigos - disponible para usuarios autenticados
+            if (roleManager.isUser() || roleManager.isAdmin()) {
+                fragment = new com.example.systembooks.fragments.FriendsFragment();
+            } else {
+                fragment = new AccessDeniedFragment();
+                Toast.makeText(this, R.string.access_denied_message, Toast.LENGTH_SHORT).show();
+            }
         } else if (id == R.id.nav_logout) {
             handleLogout();
             fragment = new LoginFragment();
@@ -332,5 +343,41 @@ public class MainActivity extends AppCompatActivity implements NavigationView.On
         }
         
         loadFragment(fragment);
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        handleNotificationIntent(intent);
+    }
+    
+    /**
+     * Handle notification intents to open the appropriate fragment
+     * @param intent The intent from the notification
+     */
+    private void handleNotificationIntent(Intent intent) {
+        if (intent != null && intent.getBooleanExtra("open_friends", false)) {
+            // Check if user is authenticated
+            if (sessionManager.isLoggedIn()) {
+                // Navigate to friends fragment
+                Fragment friendsFragment = new com.example.systembooks.fragments.FriendsFragment();
+                loadFragment(friendsFragment);
+                
+                // Update navigation menu selection
+                NavigationView navigationView = findViewById(R.id.nav_view);
+                navigationView.setCheckedItem(R.id.nav_friends);
+                
+                // Show appropriate message based on notification type
+                String notificationType = intent.getStringExtra("notification_type");
+                if ("friend_request".equals(notificationType)) {
+                    Toast.makeText(this, "Tienes nuevas solicitudes de amistad", Toast.LENGTH_LONG).show();
+                } else if ("friend_request_accepted".equals(notificationType)) {
+                    Toast.makeText(this, "Tu solicitud de amistad fue aceptada", Toast.LENGTH_LONG).show();
+                }
+            } else {
+                // User not authenticated, show login
+                Toast.makeText(this, "Inicia sesión para ver tus amigos", Toast.LENGTH_LONG).show();
+            }
+        }
     }
 }

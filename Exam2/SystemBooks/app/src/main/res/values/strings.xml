@@ -48,7 +48,7 @@
     <string name="camera">Cámara</string>
     <string name="gallery">Galería</string>
     <string name="cancel">Cancelar</string>
-    <string name="no_users_found">No se encontraron usuarios</string>
+<!--    <string name="no_users_found">No se encontraron usuarios</string>-->
     
     <!-- Firebase -->
     <string name="firebase_login_title">Iniciar sesión con Firebase</string>
@@ -56,7 +56,7 @@
     <string name="choose_login_method">Elegir método de inicio de sesión</string>
     <string name="choose_register_method">Elegir método de registro</string>
     <string name="select_user">Por favor seleccione un usuario</string>
-    <string name="error_loading_users">Error al cargar usuarios</string>
+<!--    <string name="error_loading_users">Error al cargar usuarios</string>-->
     <string name="default_username">Usuario</string>
     <string name="admin_role_name">Administrador</string>
     <string name="user_role_name">Usuario</string>
@@ -141,7 +141,7 @@
     <string name="no_recommendations">No hay recomendaciones disponibles</string>
     
     <!-- Search Fragment -->
-    <string name="search_hint">Buscar libros por título, autor…</string>
+<!--    <string name="search_hint">Buscar libros por título, autor…</string>-->
     <string name="no_results">No se encontraron resultados</string>
     <string name="search_results">Search Results</string>
     <string name="search_results_for">Results for "%1$s"</string>
@@ -195,4 +195,21 @@
     <string name="user_email">%1$s</string>
     <string name="items_count">%1$d items</string>
     <string name="load_error">Error al cargar datos</string>
+    
+    <!-- Friend system strings -->
+    <string name="friends">Amigos</string>
+    <string name="friends_management">Gestión de Amigos</string>
+    <string name="search_users">Buscar usuarios</string>
+    <string name="send_friend_request">Enviar solicitud</string>
+    <string name="accept_friend_request">Aceptar</string>
+    <string name="reject_friend_request">Rechazar</string>
+    <string name="friend_request_sent">Solicitud de amistad enviada</string>
+    <string name="friend_request_accepted">Solicitud aceptada</string>
+    <string name="friend_request_rejected">Solicitud rechazada</string>
+    <string name="already_friends">Ya son amigos</string>
+    <string name="friend_request_pending">Ya existe una solicitud pendiente</string>
+    <string name="no_users_found">No se encontraron usuarios</string>
+    <string name="error_loading_users">Error al cargar usuarios</string>
+    <string name="error_sending_friend_request">Error enviando solicitud de amistad</string>
+    <string name="search_hint">Buscar por nombre o email</string>
 </resources>

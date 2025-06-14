@@ -9,4 +9,8 @@
     <!-- Skeleton loading colors -->
     <color name="skeleton_color">#E0E0E0</color>
     <color name="skeleton_shimmer">#F5F5F5</color>
+    
+    <!-- Friend system colors -->
+    <color name="orange">#FF9800</color>
+    <color name="lightOrange">#FFF3E0</color>
 </resources>
