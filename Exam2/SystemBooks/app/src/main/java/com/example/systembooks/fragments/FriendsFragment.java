@@ -23,6 +23,7 @@ import com.example.systembooks.firebase.FirebaseAuthRepository;
 import com.example.systembooks.firebase.FirebaseUser;
 import com.example.systembooks.firebase.FriendshipRepository;
 import com.example.systembooks.models.FriendRequest;
+import com.example.systembooks.util.LocalNotificationHelper;
 import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.textfield.TextInputEditText;
 
@@ -50,10 +51,9 @@ public class FriendsFragment extends Fragment {
     private TextView textViewNoFriendRequests;
     private TextView textViewNoSentRequests;
     private TextView textViewNoFriends;
-    private ProgressBar progressBar;
-
-    // Data and Adapters
+    private ProgressBar progressBar;    // Data and Adapters
     private FriendshipRepository friendshipRepository;
+    private LocalNotificationHelper localNotificationHelper;
     private UserSearchAdapter userSearchAdapter;
     private FriendRequestAdapter friendRequestAdapter;
     private SentRequestAdapter sentRequestAdapter;
@@ -67,13 +67,12 @@ public class FriendsFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_friends, container, false);
 
-        Log.d(TAG, "FriendsFragment onCreateView called");
-
-        initializeViews(view);
+        Log.d(TAG, "FriendsFragment onCreateView called");        initializeViews(view);
         setupAdapters();
         setupListeners();
 
         friendshipRepository = new FriendshipRepository(requireContext());
+        localNotificationHelper = new LocalNotificationHelper(requireContext());
 
         // Load data after a short delay to ensure UI is ready
         view.post(() -> {
@@ -249,6 +248,23 @@ public class FriendsFragment extends Fragment {
                 recyclerViewFriendRequests.setVisibility(requests.isEmpty() ? View.GONE : View.VISIBLE);
                 
                 Log.d(TAG, "Friend requests UI updated. RecyclerView visible: " + (recyclerViewFriendRequests.getVisibility() == View.VISIBLE));
+                  // Send local notification if there are pending requests and this is the initial load
+                if (!requests.isEmpty() && getView() != null && shouldSendNotification()) {
+                    String title = "Solicitudes de amistad";
+                    String message = requests.size() == 1 
+                        ? "Tienes 1 solicitud de amistad pendiente"
+                        : "Tienes " + requests.size() + " solicitudes de amistad pendientes";
+                    
+                    Log.d(TAG, "Sending local notification for friend requests: " + message);
+                    
+                    // Delay the notification to avoid sending it immediately on fragment load
+                    getView().postDelayed(() -> {
+                        if (localNotificationHelper != null) {
+                            localNotificationHelper.sendLocalNotification(title, message);
+                            markNotificationSent();
+                        }
+                    }, 3000); // 3 second delay
+                }
             }
 
             @Override
@@ -259,7 +275,7 @@ public class FriendsFragment extends Fragment {
                 Toast.makeText(requireContext(), "Error cargando solicitudes: " + errorMessage, Toast.LENGTH_LONG).show();
             }
         });
-    }    private void loadSentRequests() {
+    }private void loadSentRequests() {
         Log.d(TAG, "Loading sent requests...");
         friendshipRepository.getOutgoingFriendRequests(new FirebaseAuthRepository.FirebaseCallback<List<FriendRequest>>() {
             @Override
@@ -677,6 +693,218 @@ public class FriendsFragment extends Fragment {
                     imageViewFriendAvatar.setImageResource(R.drawable.ic_profile);
                 }
             }
+        }
+    }    /**
+     * Send local notification for pending friend requests
+     * @param incomingRequestsCount Number of incoming friend requests
+     * @param outgoingRequestsCount Number of outgoing friend requests
+     */
+    private void sendLocalNotificationsForPendingRequests(int incomingRequestsCount, int outgoingRequestsCount) {
+        Log.d(TAG, "Checking for pending requests to send notifications - Incoming: " + incomingRequestsCount + ", Outgoing: " + outgoingRequestsCount);
+        
+        // Check if we should send notifications
+        if (!shouldSendNotification()) {
+            return;
+        }
+        
+        // Send notification for incoming friend requests (priority)
+        if (incomingRequestsCount > 0) {
+            String title = "Solicitudes de amistad";
+            String message = incomingRequestsCount == 1 
+                ? "Tienes 1 solicitud de amistad pendiente"
+                : "Tienes " + incomingRequestsCount + " solicitudes de amistad pendientes";
+            
+            Log.d(TAG, "Sending local notification for incoming requests: " + message);
+            localNotificationHelper.sendLocalNotification(title, message);
+            markNotificationSent();
+            return; // Only send one notification at a time
+        }
+        
+        // Send notification for outgoing friend requests (secondary priority)
+        if (outgoingRequestsCount > 0) {
+            String title = "Solicitudes enviadas";
+            String message = outgoingRequestsCount == 1 
+                ? "Tienes 1 solicitud enviada esperando respuesta"
+                : "Tienes " + outgoingRequestsCount + " solicitudes enviadas esperando respuesta";
+            
+            Log.d(TAG, "Sending local notification for outgoing requests: " + message);
+            localNotificationHelper.sendLocalNotification(title, message);
+            markNotificationSent();
+        }
+    }
+
+    /**
+     * Check and send notifications when fragment becomes visible
+     */
+    private void checkAndSendNotificationsOnResume() {
+        Log.d(TAG, "Checking for notifications on fragment resume");
+        
+        // Load requests specifically for notification checking
+        loadRequestsForNotificationCheck();
+    }
+
+    /**
+     * Load requests specifically for notification purposes
+     */
+    private void loadRequestsForNotificationCheck() {
+        Log.d(TAG, "Loading requests for notification check...");
+        
+        // Create counters for both types of requests
+        final int[] incomingCount = {0};
+        final int[] outgoingCount = {0};
+        final boolean[] incomingLoaded = {false};
+        final boolean[] outgoingLoaded = {false};
+        
+        // Load incoming requests
+        friendshipRepository.getIncomingFriendRequests(new FirebaseAuthRepository.FirebaseCallback<List<FriendRequest>>() {
+            @Override
+            public void onSuccess(List<FriendRequest> requests) {
+                incomingCount[0] = requests.size();
+                incomingLoaded[0] = true;
+                
+                Log.d(TAG, "Loaded " + requests.size() + " incoming requests for notification check");
+                
+                // Check if both are loaded and send notifications
+                if (outgoingLoaded[0]) {
+                    sendLocalNotificationsForPendingRequests(incomingCount[0], outgoingCount[0]);
+                }
+            }
+
+            @Override
+            public void onError(String errorMessage) {
+                Log.e(TAG, "Error loading incoming requests for notification: " + errorMessage);
+                incomingLoaded[0] = true;
+                
+                // Still check if outgoing is loaded
+                if (outgoingLoaded[0]) {
+                    sendLocalNotificationsForPendingRequests(0, outgoingCount[0]);
+                }
+            }
+        });
+        
+        // Load outgoing requests
+        friendshipRepository.getOutgoingFriendRequests(new FirebaseAuthRepository.FirebaseCallback<List<FriendRequest>>() {
+            @Override
+            public void onSuccess(List<FriendRequest> requests) {
+                outgoingCount[0] = requests.size();
+                outgoingLoaded[0] = true;
+                
+                Log.d(TAG, "Loaded " + requests.size() + " outgoing requests for notification check");
+                
+                // Check if both are loaded and send notifications
+                if (incomingLoaded[0]) {
+                    sendLocalNotificationsForPendingRequests(incomingCount[0], outgoingCount[0]);
+                }
+            }
+
+            @Override
+            public void onError(String errorMessage) {
+                Log.e(TAG, "Error loading outgoing requests for notification: " + errorMessage);
+                outgoingLoaded[0] = true;
+                
+                // Still check if incoming is loaded
+                if (incomingLoaded[0]) {
+                    sendLocalNotificationsForPendingRequests(incomingCount[0], 0);
+                }
+            }
+        });
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        Log.d(TAG, "FriendsFragment onResume - checking for pending requests");
+        
+        // Check for pending requests and send notifications when fragment becomes visible
+        if (friendshipRepository != null && localNotificationHelper != null) {
+            // Add a delay to ensure the fragment is fully loaded
+            if (getView() != null) {
+                getView().postDelayed(() -> {
+                    checkAndSendNotificationsOnResume();
+                }, 2000); // 2 second delay to ensure everything is loaded
+            }
+        }
+    }
+    
+    @Override
+    public void setUserVisibleHint(boolean isVisibleToUser) {
+        super.setUserVisibleHint(isVisibleToUser);
+        
+        if (isVisibleToUser && isResumed()) {
+            Log.d(TAG, "FriendsFragment became visible to user - checking for notifications");
+            
+            // Check for pending requests when fragment becomes visible
+            if (friendshipRepository != null && localNotificationHelper != null) {
+                // Add a delay to ensure the fragment is fully loaded
+                if (getView() != null) {
+                    getView().postDelayed(() -> {
+                        checkAndSendNotificationsOnResume();
+                    }, 1500); // 1.5 second delay
+                }
+            }
+        }
+    }
+
+    // Variables para controlar las notificaciones
+    private boolean hasShownNotificationThisSession = false;
+    private static final String PREFS_NAME = "FriendsFragmentPrefs";
+    private static final String KEY_LAST_NOTIFICATION_TIME = "last_notification_time";
+    private static final long NOTIFICATION_COOLDOWN = 300000; // 5 minutos en milisegundos
+
+    /**
+     * Check if we should send a notification based on cooldown period
+     * @return true if notification should be sent, false otherwise
+     */
+    private boolean shouldSendNotification() {
+        // Don't send if already shown in this session
+        if (hasShownNotificationThisSession) {
+            Log.d(TAG, "Notification already shown this session, skipping");
+            return false;
+        }
+        
+        // Check cooldown period using SharedPreferences
+        android.content.SharedPreferences prefs = requireContext().getSharedPreferences(PREFS_NAME, android.content.Context.MODE_PRIVATE);
+        long lastNotificationTime = prefs.getLong(KEY_LAST_NOTIFICATION_TIME, 0);
+        long currentTime = System.currentTimeMillis();
+        
+        if (currentTime - lastNotificationTime < NOTIFICATION_COOLDOWN) {
+            Log.d(TAG, "Notification cooldown active, skipping. Last: " + lastNotificationTime + ", Current: " + currentTime);
+            return false;
+        }
+        
+        return true;
+    }
+
+    /**
+     * Mark that a notification has been sent
+     */
+    private void markNotificationSent() {
+        hasShownNotificationThisSession = true;
+        
+        // Update SharedPreferences
+        android.content.SharedPreferences prefs = requireContext().getSharedPreferences(PREFS_NAME, android.content.Context.MODE_PRIVATE);
+        prefs.edit().putLong(KEY_LAST_NOTIFICATION_TIME, System.currentTimeMillis()).apply();
+        
+        Log.d(TAG, "Marked notification as sent for this session");
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        Log.d(TAG, "FriendsFragment onPause");
+        // Reset notification flag when leaving the fragment
+        // This allows notifications to be shown again next time the user enters
+        // hasShownNotificationThisSession = false; // Uncomment if you want notifications every time
+    }
+    
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        Log.d(TAG, "FriendsFragment onDestroyView");
+        // Clean up resources
+        if (localNotificationHelper != null) {
+            // Cancel any pending notifications
+            localNotificationHelper.cancelAllNotifications();
         }
     }
 }
