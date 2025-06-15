@@ -54,13 +54,13 @@ import java.util.*
 import kotlin.random.Random
 
 class MainActivity : ComponentActivity() {
-    
+
     companion object {
         private var instance: MainActivity? = null
-        
+
         fun getInstance(): MainActivity? = instance
     }
-    
+
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted ->
@@ -68,10 +68,10 @@ class MainActivity : ComponentActivity() {
             createNotificationChannel()
         }
     }
-    
+
     private val auth = FirebaseAuth.getInstance()
     private val firestore = FirebaseFirestore.getInstance()
-    
+
     // Variables para notificaciones locales de prueba
     private var notificationHandler: Handler? = null
     private var notificationRunnable: Runnable? = null
@@ -79,10 +79,10 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
+
         // Asignar la instancia
         instance = this
-        
+
         // Solicitar permisos de notificación
         if (ContextCompat.checkSelfPermission(
                 this, Manifest.permission.POST_NOTIFICATIONS
@@ -117,14 +117,17 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
+        // Inicializar el gestor de notificaciones
+        initializeNotificationManager()
+
         setContent {
             WearApp()
         }
     }
-    
+
     private fun createUserProfile(userId: String?) {
         if (userId == null) return
-        
+
         val deviceName = android.os.Build.MODEL
         val user = hashMapOf(
             "name" to "Usuario de $deviceName",
@@ -135,26 +138,26 @@ class MainActivity : ComponentActivity() {
             "dailyGoal" to HydrationManager.getDailyGoal(this),
             "dailyIntake" to HydrationManager.getTodayIntake(this)
         )
-        
+
         firestore.collection("users").document(userId)
             .set(user)
             .addOnSuccessListener {
                 updateDeviceToken(userId)
             }
     }
-    
+
     private fun updateDeviceToken(userId: String) {
         FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
             if (task.isSuccessful) {
                 val token = task.result
-                
+
                 val tokenData = hashMapOf(
                     "token" to token,
                     "userId" to userId,
                     "deviceType" to "wearable",
                     "timestamp" to com.google.firebase.Timestamp.now()
                 )
-                
+
                 firestore.collection("device_tokens")
                     .document(token)
                     .set(tokenData)
@@ -163,25 +166,29 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun createNotificationChannel() {
-        val channel = NotificationChannel(
+        // Canal para notificaciones remotas (FCM)
+        val remoteChannel = NotificationChannel(
             "HYDRATION_CHANNEL",
             "Recordatorios de Hidratación",
             NotificationManager.IMPORTANCE_HIGH
         ).apply {
             description = "Notificaciones para recordar beber agua"
         }
-        
+
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.createNotificationChannel(channel)
+        notificationManager.createNotificationChannel(remoteChannel)
+        
+        // Crear también el canal para notificaciones locales
+        HydrationNotificationManager.createLocalNotificationChannel(this)
     }
-    
+
     // Funciones para notificaciones locales de prueba
     fun startLocalNotifications() {
         if (isNotificationActive) return
-        
+
         isNotificationActive = true
         notificationHandler = Handler(Looper.getMainLooper())
-        
+
         notificationRunnable = object : Runnable {
             override fun run() {
                 if (isNotificationActive) {
@@ -190,11 +197,11 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-        
+
         notificationHandler?.post(notificationRunnable!!)
         Toast.makeText(this, "🔔 Notificaciones iniciadas (cada 30s)", Toast.LENGTH_SHORT).show()
     }
-    
+
     fun stopLocalNotifications() {
         isNotificationActive = false
         notificationRunnable?.let { runnable ->
@@ -204,12 +211,12 @@ class MainActivity : ComponentActivity() {
         notificationRunnable = null
         Toast.makeText(this, "🔕 Notificaciones detenidas", Toast.LENGTH_SHORT).show()
     }
-    
+
     private fun sendLocalNotification() {
         val currentIntake = HydrationManager.getTodayIntake(this)
         val dailyGoal = HydrationManager.getDailyGoal(this)
         val remaining = HydrationManager.getRemainingWater(this)
-        
+
         val testMessages = arrayOf(
             "💧 ¡Hora de hidratarte!",
             "🚰 Recuerda beber agua",
@@ -217,16 +224,16 @@ class MainActivity : ComponentActivity() {
             "🌊 Mantente hidratado",
             "💧 Es momento de tomar agua"
         )
-        
+
         val title = testMessages.random()
         val body = if (remaining > 0) {
             "Progreso: ${currentIntake}ml / ${dailyGoal}ml\nFaltan: ${remaining}ml para tu meta"
         } else {
             "🎉 ¡Meta alcanzada! Total: ${currentIntake}ml"
         }
-        
+
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        
+
         val notification = NotificationCompat.Builder(this, "HYDRATION_CHANNEL")
             .setSmallIcon(com.example.water.R.drawable.ic_water_drop)
             .setContentTitle(title)
@@ -235,10 +242,44 @@ class MainActivity : ComponentActivity() {
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setAutoCancel(true)
             .build()
-        
+
         notificationManager.notify(Random.nextInt(1000, 9999), notification)
     }
-    
+
+    private fun initializeNotificationManager() {
+        // Inicializar el token FCM en un hilo separado
+        Thread {
+            try {
+                kotlinx.coroutines.runBlocking {
+                    val token = HydrationNotificationManager.initializeFCMToken()
+                    if (token != null) {
+                        // Suscribirse a tópicos generales
+                        HydrationNotificationManager.subscribeToTopic("hydration_reminders")
+                        HydrationNotificationManager.subscribeToTopic("general_announcements")
+
+                        runOnUiThread {
+                            Toast.makeText(this@MainActivity,
+                                "Sistema de notificaciones iniciado",
+                                Toast.LENGTH_SHORT).show()
+                        }
+                    } else {
+                        runOnUiThread {
+                            Toast.makeText(this@MainActivity,
+                                "Error al configurar notificaciones",
+                                Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                runOnUiThread {
+                    Toast.makeText(this@MainActivity,
+                        "Error: ${e.message}",
+                        Toast.LENGTH_SHORT).show()
+                }
+            }
+        }.start()
+    }
+
     override fun onDestroy() {
         super.onDestroy()
         stopLocalNotifications()
@@ -249,7 +290,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun WearApp() {
     val navController = rememberSwipeDismissableNavController()
-    
+
     MaterialTheme {
         SwipeDismissableNavHost(
             navController = navController,
@@ -259,7 +300,8 @@ fun WearApp() {
                 HomeScreen(
                     onSettingsClick = { navController.navigate("settings") },
                     onStatsClick = { navController.navigate("stats") },
-                    onGroupsClick = { navController.navigate("groups") }
+                    onGroupsClick = { navController.navigate("groups") },
+                    onNotificationsClick = { navController.navigate("notifications_menu") }
                 )
             }
             composable("settings") {
@@ -304,6 +346,31 @@ fun WearApp() {
                     onBackClick = { navController.popBackStack() }
                 )
             }
+
+            // Rutas para notificaciones
+            composable("notifications_menu") {
+                NotificationsMenuScreen(
+                    onBackClick = { navController.popBackStack() },
+                    onSendToFriend = { navController.navigate("send_to_friend") },
+                    onSendToGroup = { navController.navigate("send_to_group") },
+                    onQuickReminder = { navController.navigate("quick_reminder") }
+                )
+            }
+            composable("send_to_friend") {
+                SendToFriendScreen(
+                    onBackClick = { navController.popBackStack() }
+                )
+            }
+            composable("send_to_group") {
+                SendToGroupScreen(
+                    onBackClick = { navController.popBackStack() }
+                )
+            }
+            composable("quick_reminder") {
+                QuickReminderScreen(
+                    onBackClick = { navController.popBackStack() }
+                )
+            }
         }
     }
 }
@@ -312,14 +379,15 @@ fun WearApp() {
 fun HomeScreen(
     onSettingsClick: () -> Unit,
     onStatsClick: () -> Unit,
-    onGroupsClick: () -> Unit
+    onGroupsClick: () -> Unit,
+    onNotificationsClick: () -> Unit
 ) {
     val context = LocalContext.current
     var waterIntake by remember { mutableStateOf(HydrationManager.getTodayIntake(context)) }
     var dailyGoal by remember { mutableStateOf(HydrationManager.getDailyGoal(context)) }
-    
+
     val progress = (waterIntake.toFloat() / dailyGoal.toFloat()).coerceAtMost(1f)
-    
+
     Scaffold(
         vignette = { Vignette(vignettePosition = VignettePosition.TopAndBottom) },
         positionIndicator = { PositionIndicator(scalingLazyListState = rememberScalingLazyListState()) }
@@ -363,7 +431,7 @@ fun HomeScreen(
                     }
                 }
             }
-            
+
             item {
                 Text(
                     text = "💧 Hidratación",
@@ -372,7 +440,7 @@ fun HomeScreen(
                     textAlign = TextAlign.Center
                 )
             }
-            
+
             item {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -394,7 +462,7 @@ fun HomeScreen(
                             }
                         }
                     )
-                    
+
                     // Botón +500ml
                     Chip(
                         onClick = {
@@ -413,7 +481,7 @@ fun HomeScreen(
                     )
                 }
             }
-            
+
             item {
                 // Botón personalizado
                 Chip(
@@ -435,7 +503,7 @@ fun HomeScreen(
                 )
             }
 
-            // Replace the navigation buttons section in HomeScreen with this:
+            // Navegación y botones
             item {
                 Column(
                     modifier = Modifier.fillMaxWidth(),
@@ -448,24 +516,34 @@ fun HomeScreen(
                     ) {
                         Chip(
                             onClick = onStatsClick,
-                            modifier = Modifier.width(80.dp),
-                            label = { Text("Stats", fontSize = 10.sp) }
+                            modifier = Modifier.width(70.dp),
+                            label = { Text("Stats", fontSize = 9.sp) }
                         )
                         Chip(
                             onClick = onGroupsClick,
-                            modifier = Modifier.width(80.dp),
-                            label = { Text("Grupos", fontSize = 10.sp) }
+                            modifier = Modifier.width(70.dp),
+                            label = { Text("Grupos", fontSize = 9.sp) }
                         )
                     }
-                    Chip(
-                        onClick = onSettingsClick,
-                        modifier = Modifier
-                            .width(80.dp)
-                            .padding(top = 4.dp),
-                        label = {
-                            Icon(Icons.Default.Settings, contentDescription = "Settings")
-                        }
-                    )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+                        Chip(
+                            onClick = onNotificationsClick,
+                            modifier = Modifier.width(70.dp),
+                            colors = ChipDefaults.chipColors(backgroundColor = AppColors.Orange),
+                            label = { Text("Notif", fontSize = 9.sp) }
+                        )
+                        Chip(
+                            onClick = onSettingsClick,
+                            modifier = Modifier.width(70.dp),
+                            label = {
+                                Icon(Icons.Default.Settings, contentDescription = "Settings", modifier = Modifier.size(16.dp))
+                            }
+                        )
+                    }
                 }
             }
         }
@@ -477,7 +555,7 @@ fun SettingsScreen(onBackClick: () -> Unit) {
     val context = LocalContext.current
     var dailyGoal by remember { mutableStateOf(HydrationManager.getDailyGoal(context)) }
     var reminderInterval by remember { mutableStateOf(HydrationManager.getReminderInterval(context)) }
-    
+
     Scaffold(
         vignette = { Vignette(vignettePosition = VignettePosition.TopAndBottom) }
     ) {
@@ -495,7 +573,7 @@ fun SettingsScreen(onBackClick: () -> Unit) {
                     modifier = Modifier.fillMaxWidth()
                 )
             }
-            
+
             item {
                 Text(
                     text = "Meta diaria: ${dailyGoal}ml",
@@ -504,7 +582,7 @@ fun SettingsScreen(onBackClick: () -> Unit) {
                     modifier = Modifier.fillMaxWidth()
                 )
             }
-            
+
             item {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -519,7 +597,7 @@ fun SettingsScreen(onBackClick: () -> Unit) {
                         modifier = Modifier.width(60.dp),
                         label = { Text("-250", fontSize = 10.sp) }
                     )
-                    
+
                     Chip(
                         onClick = {
                             if (dailyGoal < 5000) {
@@ -531,7 +609,7 @@ fun SettingsScreen(onBackClick: () -> Unit) {
                     )
                 }
             }
-            
+
             item {
                 Text(
                     text = "Recordatorio cada: ${reminderInterval}h",
@@ -540,7 +618,7 @@ fun SettingsScreen(onBackClick: () -> Unit) {
                     modifier = Modifier.fillMaxWidth()
                 )
             }
-            
+
             item {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -555,7 +633,7 @@ fun SettingsScreen(onBackClick: () -> Unit) {
                         modifier = Modifier.width(50.dp),
                         label = { Text("-1h", fontSize = 10.sp) }
                     )
-                    
+
                     Chip(
                         onClick = {
                             if (reminderInterval < 8) {
@@ -567,19 +645,19 @@ fun SettingsScreen(onBackClick: () -> Unit) {
                     )
                 }
             }
-            
+
             // Botón de notificaciones de prueba
             item {
                 val mainActivity = MainActivity.getInstance()
                 var isNotificationRunning by remember { mutableStateOf(false) }
-                
+
                 Text(
                     text = "🧪 Prueba de Notificaciones",
                     fontSize = 12.sp,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
                 )
-                
+
                 Chip(
                     onClick = {
                         mainActivity?.let { activity ->
@@ -614,7 +692,7 @@ fun SettingsScreen(onBackClick: () -> Unit) {
                     }
                 )
             }
-            
+
             item {
                 Chip(
                     onClick = onBackClick,
@@ -631,7 +709,7 @@ fun SettingsScreen(onBackClick: () -> Unit) {
 fun StatsScreen(onBackClick: () -> Unit) {
     val context = LocalContext.current
     val weekData = remember { HydrationManager.getWeekData(context) }
-    
+
     Scaffold(
         vignette = { Vignette(vignettePosition = VignettePosition.TopAndBottom) }
     ) {
@@ -649,7 +727,7 @@ fun StatsScreen(onBackClick: () -> Unit) {
                     modifier = Modifier.fillMaxWidth()
                 )
             }
-            
+
             items(weekData) { dayData ->
                 Card(
                     onClick = { /* No action needed for stats display */ },
@@ -674,7 +752,7 @@ fun StatsScreen(onBackClick: () -> Unit) {
                                 color = if (dayData.intake >= dayData.goal) AppColors.Green else AppColors.Orange
                             )
                         }
-                        
+
                         Box(
                             modifier = Modifier
                                 .width(60.dp)
@@ -692,7 +770,7 @@ fun StatsScreen(onBackClick: () -> Unit) {
                     }
                 }
             }
-            
+
             item {
                 Chip(
                     onClick = onBackClick,

@@ -2,6 +2,9 @@ package com.example.water.presentation
 
 import android.content.Context
 import android.content.SharedPreferences
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -56,11 +59,10 @@ object HydrationManager {
         }
 
         return prefs.getInt(KEY_TODAY_INTAKE, 0)
-    }
-
-    fun addWater(context: Context, amount: Int): Int {
+    }    fun addWater(context: Context, amount: Int): Int {
         val currentIntake = getTodayIntake(context)
         val newIntake = currentIntake + amount
+        val dailyGoal = getDailyGoal(context)
 
         getPrefs(context).edit()
             .putInt(KEY_TODAY_INTAKE, newIntake)
@@ -70,7 +72,43 @@ object HydrationManager {
         // Guardar en historial
         saveToHistory(context, getTodayString(), newIntake)
 
+        // Verificar si se alcanzó la meta por primera vez hoy
+        if (currentIntake < dailyGoal && newIntake >= dailyGoal) {
+            // Meta alcanzada por primera vez hoy
+            onGoalAchieved(context)
+        }
+
         return newIntake
+    }    private fun onGoalAchieved(context: Context) {
+        // Notificar a través del sistema de notificaciones si es posible
+        try {
+            // Crear un scope de corrutina para manejar la función suspend
+            val coroutineScope = CoroutineScope(Dispatchers.IO)
+            coroutineScope.launch {
+                try {
+                    // Obtener todos los grupos del usuario
+                    val groups = GroupManager.currentUserGroups
+                    val friendIds = mutableSetOf<String>()
+                    
+                    // Recopilar todos los IDs de amigos de todos los grupos
+                    groups.forEach { group ->
+                        friendIds.addAll(group.members.filter { it != GroupManager.getCurrentUserId() })
+                    }
+                    
+                    if (friendIds.isNotEmpty()) {
+                        HydrationNotificationManager.sendGoalAchievedNotification(
+                            targetUserIds = friendIds.toList(),
+                            context = context
+                        )
+                    }
+                } catch (e: Exception) {                    // Si hay error, solo loguearlo pero no afectar la funcionalidad principal
+                    android.util.Log.e("HydrationManager", "Error enviando notificación de meta alcanzada", e)
+                }
+            }
+        } catch (e: Exception) {
+            // Error al intentar notificar, pero no afecta la funcionalidad principal
+            android.util.Log.e("HydrationManager", "Error configurando notificación de meta", e)
+        }
     }
 
     private fun saveToHistory(context: Context, date: String, intake: Int) {

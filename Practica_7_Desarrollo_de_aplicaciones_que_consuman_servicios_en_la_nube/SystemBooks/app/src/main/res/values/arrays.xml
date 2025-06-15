@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Opciones para el spinner de destinatarios de notificaciones -->
+    <string-array name="notification_target_types">
+        <item>Todos los usuarios</item>
+        <item>Usuario específico</item>
+    </string-array>
+</resources>

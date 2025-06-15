@@ -9,7 +9,12 @@ import kotlinx.coroutines.flow.StateFlow
 data class FriendData(
     val id: String = "",
     val name: String = "",
+    val username: String = "",
     val email: String = "",
+    val fcmToken: String = "",
+    val photoUrl: String = "",
+    val role: String = "",
+    val createdAt: Long = 0,
     val lastActive: Long = 0,
     val isOnline: Boolean = false,
     val dailyIntake: Int = 0,
@@ -94,8 +99,7 @@ object GroupManager {
                 onComplete(false, "Error al cargar grupos: ${e.message}")
             }
     }
-    
-    fun loadGroupMembers(groupId: String, onComplete: (Boolean, String) -> Unit) {
+      fun loadGroupMembers(groupId: String, onComplete: (Boolean, String) -> Unit) {
         _currentGroupMembers.clear()
         
         val group = _currentUserGroups.find { it.id == groupId }
@@ -115,36 +119,49 @@ object GroupManager {
         }
         
         group.members.forEach { memberId ->
-            firestore.collection("users").document(memberId)
-                .get()
-                .addOnSuccessListener { document ->
-                    if (document.exists()) {
-                        val userData = document.toObject(FriendData::class.java)?.copy(
-                            id = memberId,
-                            // Simulamos aleatoriamente si están en línea
-                            isOnline = Math.random() > 0.5
-                        ) ?: FriendData(id = memberId)
+            // Verificar si es un usuario ficticio
+            val fictitiousUser = _allAvailableUsers.find { it.id == memberId }
+            if (fictitiousUser != null) {
+                _currentGroupMembers.add(fictitiousUser)
+                updateOnlineFriendsCount()
+                completedCount++
+                checkIfComplete(completedCount, errorCount, totalMembers, onComplete)
+            } else {
+                // Buscar en Firebase
+                firestore.collection("users").document(memberId)
+                    .get()
+                    .addOnSuccessListener { document ->
+                        if (document.exists()) {
+                            val userData = document.toObject(FriendData::class.java)?.copy(
+                                id = memberId,
+                                // Simulamos aleatoriamente si están en línea
+                                isOnline = Math.random() > 0.5
+                            ) ?: FriendData(id = memberId)
+                            
+                            _currentGroupMembers.add(userData)
+                            
+                            // Actualizar contador de amigos online
+                            updateOnlineFriendsCount()
+                        }
                         
-                        _currentGroupMembers.add(userData)
-                        
-                        // Actualizar contador de amigos online
-                        updateOnlineFriendsCount()
+                        completedCount++
+                        checkIfComplete(completedCount, errorCount, totalMembers, onComplete)
                     }
-                    
-                    completedCount++
-                    checkIfComplete(completedCount, errorCount, totalMembers, onComplete)
-                }
-                .addOnFailureListener { e ->
-                    errorCount++
-                    completedCount++
-                    checkIfComplete(completedCount, errorCount, totalMembers, onComplete)
-                }
+                    .addOnFailureListener { e ->
+                        errorCount++
+                        completedCount++
+                        checkIfComplete(completedCount, errorCount, totalMembers, onComplete)
+                    }
+            }
         }
     }
-    
-    private fun updateOnlineFriendsCount() {
-        val onlineCount = _currentGroupMembers.count { it.isOnline }
-        _onlineFriends.value = onlineCount
+      private fun updateOnlineFriendsCount() {
+        // Contar usuarios online tanto en la lista de miembros del grupo como en todos los usuarios
+        val onlineGroupMembers = _currentGroupMembers.count { it.isOnline }
+        val onlineAllUsers = _allAvailableUsers.count { it.isOnline }
+        
+        // Usar el número mayor para mostrar más actividad
+        _onlineFriends.value = maxOf(onlineGroupMembers, onlineAllUsers)
     }
     
     private fun checkIfComplete(
@@ -163,9 +180,26 @@ object GroupManager {
             onComplete(success, message)
         }
     }
-    
-    fun addFriendToGroup(groupId: String, friendEmail: String, onComplete: (Boolean, String) -> Unit) {
-        // Primero buscar usuario por email
+      fun addFriendToGroup(groupId: String, friendEmail: String, onComplete: (Boolean, String) -> Unit) {
+        // Primero verificar si es un usuario ficticio en la lista local
+        val fictitiousUser = _allAvailableUsers.find { 
+            it.email.equals(friendEmail, ignoreCase = true) && it.id.startsWith("fictitious_") 
+        }
+        
+        if (fictitiousUser != null) {
+            // Es un usuario ficticio, simular añadirlo al grupo
+            val groupIndex = _currentUserGroups.indexOfFirst { it.id == groupId }
+            if (groupIndex >= 0) {
+                val updatedGroup = _currentUserGroups[groupIndex].copy(
+                    members = _currentUserGroups[groupIndex].members + fictitiousUser.id
+                )
+                _currentUserGroups[groupIndex] = updatedGroup
+            }
+            onComplete(true, "Amigo ${fictitiousUser.name} añadido al grupo")
+            return
+        }
+        
+        // Buscar usuario real en Firebase por email
         firestore.collection("users")
             .whereEqualTo("email", friendEmail)
             .limit(1)
@@ -179,7 +213,7 @@ object GroupManager {
                 val friendDoc = documents.documents[0]
                 val friendId = friendDoc.id
                 
-                // Ahora actualizar el grupo
+                // Ahora actualizar el grupo en Firebase
                 firestore.collection("groups").document(groupId)
                     .update("members", com.google.firebase.firestore.FieldValue.arrayUnion(friendId))
                     .addOnSuccessListener {
@@ -242,80 +276,196 @@ object GroupManager {
                 onComplete(false, "Error al salir del grupo: ${e.message}")
             }
     }
-    
-    /**
+      /**
      * Carga todos los usuarios disponibles desde Firebase más usuarios ficticios
      * con puntos verdes que simulan conexión en tiempo real
      */
     fun loadAllAvailableUsers(onComplete: (Boolean, String) -> Unit) {
+        val currentUserId = getCurrentUserId()
+        if (currentUserId.isEmpty()) {
+            onComplete(false, "Usuario no autenticado")
+            return
+        }
+        
         _allAvailableUsers.clear()
         
-        // Primero agregar usuarios ficticios
-        val fictitiousUsers = listOf(
-            FriendData(
-                id = "fictitious_1",
-                name = "Ana Martínez",
-                email = "ana.martinez@ejemplo.com",
-                isOnline = true,
-                dailyIntake = 1200,
-                dailyGoal = 2000,
-                lastActive = System.currentTimeMillis()
-            ),
-            FriendData(
-                id = "fictitious_2", 
-                name = "Carlos López",
-                email = "carlos.lopez@ejemplo.com",
-                isOnline = true,
-                dailyIntake = 1800,
-                dailyGoal = 2500,
-                lastActive = System.currentTimeMillis()
-            )
-        )
-        
-        _allAvailableUsers.addAll(fictitiousUsers)
-        
-        // Luego cargar usuarios de Firebase
+        // Cargar usuarios reales de Firebase
         firestore.collection("users")
             .get()
             .addOnSuccessListener { documents ->
+                val firebaseUsers = mutableListOf<FriendData>()
+                
                 for (document in documents) {
                     try {
-                        val userData = document.toObject(FriendData::class.java).copy(
-                            id = document.id,
-                            // Simular conexión en tiempo real - todos aparecen online
-                            isOnline = true,
-                            lastActive = System.currentTimeMillis()
+                        val userData = document.data
+                        val userId = document.id
+                        
+                        // No incluir al usuario actual
+                        if (userId == currentUserId) continue
+                        
+                        val friendData = FriendData(
+                            id = userId,
+                            name = userData["username"] as? String ?: (userData["email"] as? String)?.substringBefore("@") ?: "Usuario",
+                            username = userData["username"] as? String ?: "",
+                            email = userData["email"] as? String ?: "",
+                            fcmToken = userData["fcmToken"] as? String ?: "",
+                            photoUrl = userData["photoUrl"] as? String ?: "",
+                            role = userData["role"] as? String ?: "user",
+                            createdAt = userData["createdAt"] as? Long ?: System.currentTimeMillis(),
+                            lastActive = System.currentTimeMillis() - (0..3600000).random(), // Última actividad simulada
+                            isOnline = (0..1).random() == 1, // Conexión simulada
+                            dailyIntake = (500..2500).random(),
+                            dailyGoal = listOf(1500, 2000, 2500, 3000).random()
                         )
                         
-                        // No agregar usuario ficticio duplicado o usuario actual
-                        val currentUserId = getCurrentUserId()
-                        if (!userData.id.startsWith("fictitious_") && userData.id != currentUserId) {
-                            _allAvailableUsers.add(userData)
-                        }
+                        firebaseUsers.add(friendData)
                     } catch (e: Exception) {
-                        // Si hay error al convertir el documento, crear un usuario básico
-                        val basicUser = FriendData(
-                            id = document.id,
-                            name = document.get("username") as? String ?: "Usuario",
-                            email = document.get("email") as? String ?: "",
-                            isOnline = true,
-                            dailyIntake = (document.get("dailyIntake") as? Long)?.toInt() ?: 0,
-                            dailyGoal = (document.get("dailyGoal") as? Long)?.toInt() ?: 2000,
-                            lastActive = System.currentTimeMillis()
-                        )
-                        
-                        val currentUserId = getCurrentUserId()
-                        if (basicUser.id != currentUserId) {
-                            _allAvailableUsers.add(basicUser)
-                        }
+                        android.util.Log.e("GroupManager", "Error procesando usuario: ${e.message}")
                     }
                 }
                 
-                onComplete(true, "Usuarios cargados: ${_allAvailableUsers.size}")
+                // Agregar usuarios ficticios adicionales si hay pocos usuarios reales
+                val fictitiousUsers = if (firebaseUsers.size < 5) {
+                    listOf(
+                        FriendData(
+                            id = "fictitious_1",
+                            name = "Ana García",
+                            username = "ana_garcia",
+                            email = "ana.garcia@example.com",
+                            fcmToken = "fake_token_1",
+                            lastActive = System.currentTimeMillis() - 1800000,
+                            isOnline = true,
+                            dailyIntake = 1800,
+                            dailyGoal = 2000
+                        ),
+                        FriendData(
+                            id = "fictitious_2", 
+                            name = "Carlos López",
+                            username = "carlos_lopez",
+                            email = "carlos.lopez@example.com",
+                            fcmToken = "fake_token_2",
+                            lastActive = System.currentTimeMillis() - 300000,
+                            isOnline = true,
+                            dailyIntake = 1200,
+                            dailyGoal = 2500
+                        ),
+                        FriendData(
+                            id = "fictitious_3",
+                            name = "María Rodriguez",
+                            username = "maria_rodriguez", 
+                            email = "maria.rodriguez@example.com",
+                            fcmToken = "fake_token_3",
+                            lastActive = System.currentTimeMillis() - 7200000,
+                            isOnline = false,
+                            dailyIntake = 2200,
+                            dailyGoal = 2000
+                        ),
+                        FriendData(
+                            id = "fictitious_4",
+                            name = "David Martín",
+                            username = "david_martin",
+                            email = "david.martin@example.com",
+                            fcmToken = "fake_token_4",
+                            lastActive = System.currentTimeMillis() - 900000,
+                            isOnline = true,
+                            dailyIntake = 1500,
+                            dailyGoal = 3000
+                        ),
+                        FriendData(
+                            id = "fictitious_5",
+                            name = "Laura Sánchez",
+                            username = "laura_sanchez",
+                            email = "laura.sanchez@example.com",
+                            fcmToken = "fake_token_5",
+                            lastActive = System.currentTimeMillis() - 600000,
+                            isOnline = false,
+                            dailyIntake = 800,
+                            dailyGoal = 1500
+                        )
+                    )
+                } else emptyList()
+                
+                // Combinar usuarios reales y ficticios
+                val allUsers = firebaseUsers + fictitiousUsers
+                _allAvailableUsers.addAll(allUsers.sortedBy { it.name })
+                
+                updateOnlineFriendsCount()
+                onComplete(true, "Usuarios cargados: ${firebaseUsers.size} reales, ${fictitiousUsers.size} ficticios")
             }
-            .addOnFailureListener { e ->
-                // Si falla la carga de Firebase, al menos tenemos los usuarios ficticios
-                onComplete(true, "Cargados usuarios ficticios (${fictitiousUsers.size}). Error en Firebase: ${e.message}")
+            .addOnFailureListener { exception ->
+                android.util.Log.e("GroupManager", "Error cargando usuarios: ${exception.message}")
+                
+                // En caso de error, cargar solo usuarios ficticios
+                val fictitiousUsers = listOf(
+                    FriendData(
+                        id = "fictitious_1",
+                        name = "Ana García",
+                        username = "ana_garcia",
+                        email = "ana.garcia@example.com",
+                        fcmToken = "fake_token_1",
+                        lastActive = System.currentTimeMillis() - 1800000,
+                        isOnline = true,
+                        dailyIntake = 1800,
+                        dailyGoal = 2000
+                    ),
+                    FriendData(
+                        id = "fictitious_2",
+                        name = "Carlos López", 
+                        username = "carlos_lopez",
+                        email = "carlos.lopez@example.com",
+                        fcmToken = "fake_token_2",
+                        lastActive = System.currentTimeMillis() - 300000,
+                        isOnline = true,
+                        dailyIntake = 1200,
+                        dailyGoal = 2500
+                    ),
+                    FriendData(
+                        id = "fictitious_3",
+                        name = "María Rodriguez",
+                        username = "maria_rodriguez",
+                        email = "maria.rodriguez@example.com",
+                        fcmToken = "fake_token_3",
+                        lastActive = System.currentTimeMillis() - 7200000,
+                        isOnline = false,
+                        dailyIntake = 2200,
+                        dailyGoal = 2000
+                    )
+                )
+                
+                _allAvailableUsers.addAll(fictitiousUsers)
+                updateOnlineFriendsCount()
+                onComplete(false, "Error conectando a Firebase. Mostrando usuarios de ejemplo.")
             }
+    }
+    
+    /**
+     * Busca un usuario por email en la lista de usuarios disponibles
+     */
+    fun findUserByEmail(email: String): FriendData? {
+        return _allAvailableUsers.find { it.email.equals(email, ignoreCase = true) }
+    }
+    
+    /**
+     * Obtiene usuarios online de la lista actual
+     */
+    fun getOnlineUsers(): List<FriendData> {
+        return _allAvailableUsers.filter { it.isOnline }
+    }
+    
+    /**
+     * Refresca el estado online de los usuarios (simulado)
+     */
+    fun refreshOnlineStatus() {
+        _allAvailableUsers.forEachIndexed { index, user ->
+            // Simular cambios de estado online ocasionales
+            if ((0..10).random() == 1) { // 10% de probabilidad de cambio
+                val updatedUser = user.copy(
+                    isOnline = !user.isOnline,
+                    lastActive = if (!user.isOnline) System.currentTimeMillis() else user.lastActive
+                )
+                _allAvailableUsers[index] = updatedUser
+            }
+        }
+        updateOnlineFriendsCount()
     }
 }

@@ -447,39 +447,21 @@ fun GroupDetailScreen(
                     }
                 }
             }
-            
-            item {
+              item {
                 Spacer(modifier = Modifier.height(8.dp))
                 
-                Chip(
-                    onClick = {
-                        // En un caso real, esto abriría un diálogo para ingresar email
-                        friendEmail = "amigo${(1..100).random()}@ejemplo.com"
-                        
-                        coroutineScope.launch {
-                            GroupManager.addFriendToGroup(groupId, friendEmail) { success, message ->
-                                Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
-                                if (success) {
-                                    // Recargar miembros
-                                    isLoading = true
-                                    GroupManager.loadGroupMembers(groupId) { loadSuccess, _ ->
-                                        isLoading = false
-                                        if (loadSuccess) {
-                                            members = GroupManager.currentGroupMembers
-                                        }
-                                    }
-                                }
+                AddFriendSection(
+                    groupId = groupId,
+                    currentMembers = members,
+                    onFriendAdded = {
+                        // Recargar miembros
+                        isLoading = true
+                        GroupManager.loadGroupMembers(groupId) { loadSuccess, _ ->
+                            isLoading = false
+                            if (loadSuccess) {
+                                members = GroupManager.currentGroupMembers
                             }
                         }
-                    },
-                    colors = ChipDefaults.chipColors(
-                        backgroundColor = Color(0xFF4CAF50)
-                    ),
-                    label = {
-                        Text("Añadir amigo")
-                    },
-                    icon = {
-                        Icon(Icons.Default.Add, contentDescription = null)
                     }
                 )
             }
@@ -566,10 +548,10 @@ fun AllUsersScreen(
                     )
                 }
             }
-            
+
             item {
                 Text(
-                    text = "🟢 Todos conectados (${users.size})",
+                    text = "🟢 ${users.count { it.isOnline }} conectados / ${users.size} usuarios",
                     fontSize = 14.sp,
                     color = Color(0xFF4CAF50),
                     modifier = Modifier.padding(vertical = 8.dp)
@@ -598,92 +580,91 @@ fun AllUsersScreen(
                 }
             } else {
                 items(users) { user ->
-                    Row(
+                    Chip(
+                        onClick = { /* No action needed for display */ },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 6.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        // Indicador de online (siempre verde para simular conexión)
-                        Box(
-                            modifier = Modifier
-                                .size(12.dp)
-                                .clip(CircleShape)
-                                .background(Color(0xFF4CAF50))
-                        )
-                        
-                        Spacer(modifier = Modifier.width(8.dp))
-                        
-                        // Avatar
-                        Box(
-                            modifier = Modifier
-                                .size(36.dp)
-                                .clip(CircleShape)
-                                .background(
-                                    if (user.id.startsWith("fictitious_")) 
-                                        Color(0xFF9C27B0) 
-                                    else 
-                                        Color(0xFF3F51B5)
-                                ),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Person,
-                                contentDescription = null,
-                                tint = Color.White
-                            )
-                        }
-                        
-                        Spacer(modifier = Modifier.width(8.dp))
-                        
-                        // Información del usuario
-                        Column(
-                            modifier = Modifier.weight(1f)
-                        ) {
+                            .padding(vertical = 2.dp),
+                        colors = ChipDefaults.chipColors(backgroundColor = MaterialTheme.colors.surface),
+                        label = {
                             Row(
+                                modifier = Modifier.fillMaxWidth(),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Text(
-                                    text = user.name.ifEmpty { "Usuario" },
-                                    fontSize = 14.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                    modifier = Modifier.weight(1f)
+                                // Indicador de estado online/offline
+                                Box(
+                                    modifier = Modifier
+                                        .size(8.dp)
+                                        .clip(CircleShape)
+                                        .background(
+                                            if (user.isOnline) Color(0xFF4CAF50) else Color(0xFF9E9E9E)
+                                        )
                                 )
                                 
-                                if (user.id.startsWith("fictitious_")) {
+                                Spacer(modifier = Modifier.width(8.dp))
+                                
+                                Column(modifier = Modifier.weight(1f)) {
                                     Text(
-                                        text = "Demo",
-                                        fontSize = 10.sp,
-                                        color = Color(0xFF9C27B0),
-                                        modifier = Modifier
-                                            .background(
-                                                Color(0xFF9C27B0).copy(alpha = 0.1f),
-                                                RoundedCornerShape(4.dp)
-                                            )
-                                            .padding(horizontal = 4.dp, vertical = 1.dp)
+                                        text = user.name.ifEmpty { user.username.ifEmpty { "Usuario" } },
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
                                     )
+                                    
+                                    Text(
+                                        text = user.email,
+                                        fontSize = 10.sp,
+                                        color = MaterialTheme.colors.onSurface.copy(alpha = 0.7f),
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                    
+                                    if (user.role.isNotEmpty() && user.role != "user") {
+                                        Text(
+                                            text = "Rol: ${user.role}",
+                                            fontSize = 9.sp,
+                                            color = Color(0xFF2196F3),
+                                            maxLines = 1
+                                        )
+                                    }
+                                }
+                                
+                                Spacer(modifier = Modifier.width(8.dp))
+                                
+                                Column(horizontalAlignment = Alignment.End) {
+                                    Text(
+                                        text = "${user.dailyIntake}ml",
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = if (user.dailyIntake >= user.dailyGoal) Color(0xFF4CAF50) else MaterialTheme.colors.onSurface
+                                    )
+                                    
+                                    Text(
+                                        text = "/${user.dailyGoal}ml",
+                                        fontSize = 9.sp,
+                                        color = MaterialTheme.colors.onSurface.copy(alpha = 0.5f)
+                                    )
+                                    
+                                    if (user.id.startsWith("fictitious_")) {
+                                        Text(
+                                            text = "Demo",
+                                            fontSize = 8.sp,
+                                            color = Color(0xFF9C27B0),
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    } else {
+                                        Text(
+                                            text = "Firebase",
+                                            fontSize = 8.sp,
+                                            color = Color(0xFFFF9800),
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    }
                                 }
                             }
-                            
-                            Text(
-                                text = "${user.dailyIntake}ml / ${user.dailyGoal}ml hoy",
-                                fontSize = 11.sp,
-                                color = MaterialTheme.colors.onSurface.copy(alpha = 0.7f)
-                            )
-                            
-                            if (user.email.isNotEmpty()) {
-                                Text(
-                                    text = user.email,
-                                    fontSize = 10.sp,
-                                    color = MaterialTheme.colors.onSurface.copy(alpha = 0.5f),
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                            }
                         }
-                    }
+                    )
                 }
             }
             
@@ -691,7 +672,7 @@ fun AllUsersScreen(
                 Spacer(modifier = Modifier.height(8.dp))
                 
                 Text(
-                    text = "Los puntos verdes indican usuarios conectados en tiempo real. Los usuarios Demo son ejemplos ficticios.",
+                    text = "🟢 = Conectado | 🔘 = Desconectado\nFirebase = Usuario real | Demo = Usuario ficticio",
                     fontSize = 10.sp,
                     textAlign = TextAlign.Center,
                     color = MaterialTheme.colors.onSurface.copy(alpha = 0.6f),
@@ -699,6 +680,166 @@ fun AllUsersScreen(
                         .fillMaxWidth()
                         .padding(horizontal = 8.dp)
                 )
+            }
+        }
+    }
+}
+
+@Composable
+fun AddFriendSection(
+    groupId: String,
+    currentMembers: List<FriendData>,
+    onFriendAdded: () -> Unit
+) {
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    var showUsersList by remember { mutableStateOf(false) }
+    var availableUsers by remember { mutableStateOf(emptyList<FriendData>()) }
+    var isLoadingUsers by remember { mutableStateOf(false) }
+    
+    if (!showUsersList) {
+        // Botón para mostrar la lista de usuarios
+        Chip(
+            onClick = {
+                isLoadingUsers = true
+                showUsersList = true
+                coroutineScope.launch {
+                    GroupManager.loadAllAvailableUsers { success, message ->
+                        isLoadingUsers = false
+                        if (success) {
+                            // Filtrar usuarios que ya están en el grupo
+                            val currentMemberIds = currentMembers.map { it.id }.toSet()
+                            availableUsers = GroupManager.allAvailableUsers
+                        } else {
+                            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                            showUsersList = false
+                        }
+                    }
+                }
+            },
+            colors = ChipDefaults.chipColors(
+                backgroundColor = Color(0xFF4CAF50)
+            ),
+            label = {
+                Text("Añadir amigo")
+            },
+            icon = {
+                Icon(Icons.Default.Add, contentDescription = null)
+            }
+        )
+    } else {
+        // Mostrar lista de usuarios disponibles
+        Column {
+            // Botón para ocultar la lista
+            Chip(
+                onClick = { showUsersList = false },
+                colors = ChipDefaults.chipColors(
+                    backgroundColor = Color(0xFFE53935)
+                ),
+                label = {
+                    Text("Cancelar")
+                },
+                icon = {
+                    Icon(Icons.Default.Close, contentDescription = null)
+                }
+            )
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            if (isLoadingUsers) {
+                Box(
+                    modifier = Modifier.fillMaxWidth().padding(16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                }
+            } else if (availableUsers.isEmpty()) {
+                Text(
+                    text = "No hay usuarios disponibles para añadir",
+                    fontSize = 12.sp,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth().padding(8.dp),
+                    color = MaterialTheme.colors.onSurface.copy(alpha = 0.7f)
+                )
+            } else {
+                Text(
+                    text = "Selecciona un usuario:",
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(vertical = 4.dp)
+                )
+                                  // Lista de usuarios disponibles (máximo 3 para no ocupar mucho espacio)
+                availableUsers.take(3).forEach { user ->
+                    Chip(
+                        onClick = {
+                            coroutineScope.launch {
+                                GroupManager.addFriendToGroup(groupId, user.email) { success, message ->
+                                    Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                                    if (success) {
+                                        showUsersList = false
+                                        onFriendAdded()
+                                    }
+                                }
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 1.dp),
+                        colors = ChipDefaults.chipColors(backgroundColor = MaterialTheme.colors.surface),
+                        label = {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                // Indicador de estado online/offline
+                                Box(
+                                    modifier = Modifier
+                                        .size(6.dp)
+                                        .clip(CircleShape)
+                                        .background(
+                                            if (user.isOnline) Color(0xFF4CAF50) else Color(0xFF9E9E9E)
+                                        )
+                                )
+                                
+                                Spacer(modifier = Modifier.width(6.dp))
+                                
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = user.name.ifEmpty { user.username.ifEmpty { "Usuario" } },
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                    
+                                    Text(
+                                        text = user.email,
+                                        fontSize = 9.sp,
+                                        color = MaterialTheme.colors.onSurface.copy(alpha = 0.7f),
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis
+                                    )
+                                }
+                                
+                                Icon(
+                                    imageVector = Icons.Default.Add,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp),
+                                    tint = Color(0xFF4CAF50)
+                                )
+                            }
+                        }
+                    )
+                }
+                
+                if (availableUsers.size > 3) {
+                    Text(
+                        text = "... y ${availableUsers.size - 3} usuarios más",
+                        fontSize = 10.sp,
+                        color = MaterialTheme.colors.onSurface.copy(alpha = 0.6f),
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+                }
             }
         }
     }

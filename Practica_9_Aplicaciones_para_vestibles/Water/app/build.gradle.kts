@@ -58,6 +58,7 @@ dependencies {
     implementation("com.google.firebase:firebase-firestore-ktx")
     implementation("com.google.firebase:firebase-auth-ktx")
     implementation("com.google.firebase:firebase-analytics-ktx")
+    implementation("com.google.firebase:firebase-functions-ktx")
     
     // Navigation
     implementation("androidx.wear.compose:compose-navigation:1.2.1")
