@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "345911525401",
+    "project_id": "flowdiagram-app",
+    "storage_bucket": "flowdiagram-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:345911525401:android:25d0c44346688f1964aa88",
+        "android_client_info": {
+          "package_name": "com.example.flowdiagramapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDXn57bKp1ayq1QWtstRq_XBI7vY3-C1A8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart'; // Ensure this import is present
 import '../models/saved_diagram.dart';
 import '../services/database_service.dart';
+import '../services/auth_service.dart';
 import 'editor_screen.dart';
+import 'profile_screen.dart';
 
 class LoadDiagramScreen extends StatefulWidget {
   const LoadDiagramScreen({super.key});
@@ -63,6 +65,19 @@ class _LoadDiagramScreenState extends State<LoadDiagramScreen>
     return Scaffold(
       appBar: AppBar(
         title: const Text('Cargar diagrama'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.person),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const ProfileScreen(),
+                ),
+              );
+            },
+            tooltip: 'Mi perfil',
+          ),
+        ],
         bottom: TabBar(
           controller: _tabController,
           tabs: const [Tab(text: 'Mis diagramas'), Tab(text: 'Plantillas')],
@@ -75,13 +90,13 @@ class _LoadDiagramScreenState extends State<LoadDiagramScreen>
           _isLoading
               ? const Center(child: CircularProgressIndicator())
               : _diagrams.isEmpty
-              ? const Center(
-                child: Text(
-                  'No hay diagramas guardados',
-                  style: TextStyle(fontSize: 16),
-                ),
-              )
-              : _buildDiagramList(_diagrams, canDelete: true),
+                  ? const Center(
+                      child: Text(
+                        'No hay diagramas guardados',
+                        style: TextStyle(fontSize: 16),
+                      ),
+                    )
+                  : _buildDiagramList(_diagrams, canDelete: true),
 
           // Pestaña de plantillas
           _isLoading
@@ -138,13 +153,12 @@ class _LoadDiagramScreenState extends State<LoadDiagramScreen>
                 color: Colors.white,
               ),
             ),
-            trailing:
-                canDelete
-                    ? IconButton(
-                      icon: const Icon(Icons.delete),
-                      onPressed: () => _confirmDeleteDiagram(item),
-                    )
-                    : null,
+            trailing: canDelete
+                ? IconButton(
+                    icon: const Icon(Icons.delete),
+                    onPressed: () => _confirmDeleteDiagram(item),
+                  )
+                : null,
             onTap: () {
               // En lugar de cerrar la pantalla, navegamos al editor con el diagrama seleccionado
               Navigator.of(context).push(
@@ -162,24 +176,23 @@ class _LoadDiagramScreenState extends State<LoadDiagramScreen>
   Future<void> _confirmDeleteDiagram(SavedDiagram diagram) async {
     final confirmed = await showDialog<bool>(
       context: context,
-      builder:
-          (context) => AlertDialog(
-            title: const Text('Eliminar diagrama'),
-            content: Text(
-              '¿Estás seguro de que deseas eliminar "${diagram.name}"?',
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(false),
-                child: const Text('Cancelar'),
-              ),
-              FilledButton(
-                onPressed: () => Navigator.of(context).pop(true),
-                style: FilledButton.styleFrom(backgroundColor: Colors.red),
-                child: const Text('Eliminar'),
-              ),
-            ],
+      builder: (context) => AlertDialog(
+        title: const Text('Eliminar diagrama'),
+        content: Text(
+          '¿Estás seguro de que deseas eliminar "${diagram.name}"?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancelar'),
           ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('Eliminar'),
+          ),
+        ],
+      ),
     );
 
     if (confirmed == true && mounted) {

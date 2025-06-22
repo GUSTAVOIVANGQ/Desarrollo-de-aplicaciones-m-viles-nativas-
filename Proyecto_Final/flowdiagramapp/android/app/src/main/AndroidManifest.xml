@@ -2,7 +2,7 @@
     <application
         android:label="flowdiagramapp"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/flow_diagram_icon">
         <activity
             android:name=".MainActivity"
             android:exported="true"

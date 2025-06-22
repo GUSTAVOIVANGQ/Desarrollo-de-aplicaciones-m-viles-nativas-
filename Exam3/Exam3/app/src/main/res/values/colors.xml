@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Colores base -->
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    
+    <!-- Tema Guinda (Servidor) -->
+    <color name="guinda_primary">#8B1538</color>
+    <color name="guinda_primary_variant">#6D0E2A</color>
+    <color name="guinda_secondary">#C7405A</color>
+    <color name="guinda_secondary_variant">#A53347</color>
+    <color name="guinda_background">#FDFCFC</color>
+    <color name="guinda_surface">#FFFFFF</color>
+    <color name="guinda_on_primary">#FFFFFF</color>
+    <color name="guinda_on_secondary">#FFFFFF</color>
+    <color name="guinda_on_background">#1C1B1F</color>
+    <color name="guinda_on_surface">#1C1B1F</color>
+    
+    <!-- Tema Azul (Cliente) -->
+    <color name="azul_primary">#1976D2</color>
+    <color name="azul_primary_variant">#1565C0</color>
+    <color name="azul_secondary">#42A5F5</color>
+    <color name="azul_secondary_variant">#2196F3</color>
+    <color name="azul_background">#FAFAFA</color>
+    <color name="azul_surface">#FFFFFF</color>
+    <color name="azul_on_primary">#FFFFFF</color>
+    <color name="azul_on_secondary">#FFFFFF</color>
+    <color name="azul_on_background">#1C1B1F</color>
+    <color name="azul_on_surface">#1C1B1F</color>
+    
+    <!-- Estados y utilidades -->
+    <color name="success">#4CAF50</color>
+    <color name="warning">#FF9800</color>
+    <color name="error">#F44336</color>
+    <color name="info">#2196F3</color>
+    
+    <!-- Modo oscuro -->
+    <color name="dark_background">#121212</color>
+    <color name="dark_surface">#1E1E1E</color>
+    <color name="dark_on_background">#E1E1E1</color>
+    <color name="dark_on_surface">#E1E1E1</color>
+</resources>

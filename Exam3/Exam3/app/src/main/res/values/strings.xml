@@ -1,0 +1,86 @@
+<resources>
+    <string name="app_name">BlueWeb Navigator</string>
+    
+    <!-- Actividades principales -->
+    <string name="server_title">Servidor Web (Dispositivo A)</string>
+    <string name="client_title">Cliente Web (Dispositivo B)</string>
+    
+    <!-- MainActivity -->
+    <string name="main_title">BlueWeb Navigator</string>
+    <string name="main_subtitle">Navegación web a través de Bluetooth</string>
+    <string name="btn_server">Actuar como Servidor</string>
+    <string name="btn_client">Actuar como Cliente</string>
+    <string name="description">Selecciona el modo de operación para tu dispositivo</string>
+    
+    <!-- Servidor -->
+    <string name="server_status">Estado del Servidor</string>
+    <string name="server_waiting">Esperando conexiones...</string>
+    <string name="server_connected">Cliente conectado</string>
+    <string name="server_start">Iniciar Servidor</string>
+    <string name="server_stop">Detener Servidor</string>
+    <string name="server_logs">Logs del Servidor</string>
+    
+    <!-- Cliente -->
+    <string name="client_status">Estado del Cliente</string>
+    <string name="client_disconnected">Desconectado</string>
+    <string name="client_connecting">Conectando...</string>
+    <string name="client_connected">Conectado al servidor</string>
+    <string name="btn_scan">Buscar Servidores</string>
+    <string name="btn_connect">Conectar</string>
+    <string name="btn_disconnect">Desconectar</string>
+    <string name="url_hint">Ingresa la URL</string>
+    <string name="btn_go">Ir</string>
+    <string name="btn_back">Atrás</string>
+    <string name="btn_forward">Adelante</string>
+    <string name="btn_refresh">Actualizar</string>
+    
+    <!-- Mensajes -->
+    <string name="bluetooth_not_supported">Bluetooth no es compatible en este dispositivo</string>
+    <string name="bluetooth_not_enabled">Bluetooth no está habilitado</string>
+    <string name="permissions_required">Se requieren permisos de Bluetooth y ubicación</string>
+    <string name="connection_failed">Falló la conexión</string>
+    <string name="connection_lost">Conexión perdida</string>
+    <string name="no_paired_devices">No hay dispositivos emparejados</string>
+    <string name="select_server">Seleccionar Servidor</string>
+    <string name="connecting_to_device">Conectando al dispositivo...</string>
+    <string name="server_ready">Servidor listo para conexiones</string>
+    <string name="client_ready">Cliente listo</string>
+    
+    <!-- Mensajes adicionales para discovery -->
+    <string name="searching_devices">Buscando dispositivos...</string>
+    <string name="search_completed">Búsqueda completada</string>
+    <string name="no_devices_found">No se encontraron dispositivos</string>
+    <string name="device_discoverable">Dispositivo visible para conexiones</string>
+    <string name="make_discoverable_cancelled">Configuración de visibilidad cancelada</string>
+    <string name="pair_devices_first">Empareja dispositivos desde Configuración de Bluetooth primero</string>
+    <string name="server_must_be_discoverable">El servidor debe estar visible para poder conectar</string>
+    <string name="ensure_server_running">Asegúrate de que el servidor esté iniciado y visible</string>
+    
+    <!-- Nuevas funcionalidades Paso 4 -->
+    <string name="bookmark_add">Agregar marcador</string>
+    <string name="bookmark_remove">Remover marcador</string>
+    <string name="bookmark_added">Marcador agregado</string>
+    <string name="bookmark_removed">Marcador removido</string>
+    <string name="bookmark_exists">El marcador ya existe</string>
+    <string name="bookmarks_title">Marcadores</string>
+    <string name="history_title">Historial</string>
+    <string name="menu_bookmarks">Marcadores</string>
+    <string name="menu_history">Historial</string>
+    <string name="menu_settings">Configuración</string>
+    <string name="menu_low_power">Modo Bajo Consumo</string>
+    <string name="low_power_enabled">Modo bajo consumo activado</string>
+    <string name="low_power_disabled">Modo bajo consumo desactivado</string>
+    <string name="settings_title">Configuración</string>
+    <string name="settings_low_power_mode">Modo Bajo Consumo</string>
+    <string name="settings_remove_images">Remover imágenes</string>
+    <string name="settings_remove_videos">Remover videos</string>
+    <string name="settings_remove_ads">Remover anuncios</string>
+    <string name="settings_notifications">Notificaciones</string>
+    <string name="clear_history">Limpiar historial</string>
+    <string name="clear_bookmarks">Limpiar marcadores</string>
+    <string name="history_cleared">Historial limpiado</string>
+    <string name="bookmarks_cleared">Marcadores limpiados</string>
+    <string name="no_history">No hay historial</string>
+    <string name="no_bookmarks">No hay marcadores</string>
+    <string name="search_hint">Buscar en historial/marcadores</string>
+</resources>
