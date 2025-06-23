@@ -3,6 +3,8 @@ import 'package:intl/intl.dart';
 import '../services/auth_service.dart';
 import '../models/user_model.dart';
 import 'login_screen.dart';
+import 'metrics_screen.dart';
+import 'admin_metrics_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -70,7 +72,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 children: [
                   CircleAvatar(
                     radius: 50,
-                    backgroundColor: Theme.of(context).primaryColor,
+                    backgroundColor: user.isAdmin ? Colors.purple : Colors.blue,
                     child: Text(
                       user.displayName.isNotEmpty
                           ? user.displayName.substring(0, 1).toUpperCase()
@@ -102,20 +104,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
                       color: user.isAdmin
-                          ? Colors.red.withOpacity(0.1)
+                          ? Colors.purple.withOpacity(0.1)
                           : Colors.blue.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                         color: user.isAdmin
-                            ? Colors.red.withOpacity(0.3)
+                            ? Colors.purple.withOpacity(0.3)
                             : Colors.blue.withOpacity(0.3),
                       ),
                     ),
                     child: Text(
                       user.isAdmin ? 'Administrador' : 'Usuario',
                       style: TextStyle(
-                        color:
-                            user.isAdmin ? Colors.red[700] : Colors.blue[700],
+                        color: user.isAdmin
+                            ? Colors.purple[700]
+                            : Colors.blue[700],
                         fontWeight: FontWeight.bold,
                         fontSize: 12,
                       ),
@@ -165,56 +168,87 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                   const SizedBox(height: 16),
 
-                  // Métricas (si existen)
+                  // Botón para ver métricas personales
+                  Card(
+                    child: ListTile(
+                      leading: const Icon(Icons.analytics_outlined),
+                      title: const Text('Mis Métricas'),
+                      subtitle:
+                          const Text('Ver estadísticas de uso y progreso'),
+                      trailing: const Icon(Icons.arrow_forward_ios),
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => const MetricsScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Métricas resumidas (si existen)
                   if (user.metrics.isNotEmpty)
                     _buildInfoCard(
-                      title: 'Métricas personales',
-                      items: user.metrics.entries.map((entry) {
-                        return _buildInfoItem(
-                          icon: Icons.analytics_outlined,
-                          label: entry.key,
-                          value: entry.value.toString(),
-                        );
-                      }).toList(),
+                      title: 'Resumen de actividad',
+                      items: [
+                        if (user.metrics['diagramas_creados'] != null)
+                          _buildInfoItem(
+                            icon: Icons.account_tree,
+                            label: 'Diagramas creados',
+                            value: user.metrics['diagramas_creados'].toString(),
+                          ),
+                        if (user.metrics['codigo_generado'] != null)
+                          _buildInfoItem(
+                            icon: Icons.code,
+                            label: 'Código generado',
+                            value: user.metrics['codigo_generado'].toString(),
+                          ),
+                        if (user.metrics['total_validaciones'] != null)
+                          _buildInfoItem(
+                            icon: Icons.check_circle,
+                            label: 'Validaciones realizadas',
+                            value:
+                                user.metrics['total_validaciones'].toString(),
+                          ),
+                      ],
                     ),
 
                   const SizedBox(height: 24),
 
                   // Opciones administrativas
-                  if (user.isAdmin)
+                  if (user.isAdmin) ...[
                     Card(
+                      color: Colors.purple.shade50,
                       child: ListTile(
-                        leading: const Icon(Icons.dashboard_outlined),
+                        leading: const Icon(Icons.admin_panel_settings,
+                            color: Colors.purple),
                         title: const Text('Panel de Administración'),
                         subtitle: const Text(
                             'Ver métricas globales y gestionar usuarios'),
                         trailing: const Icon(Icons.arrow_forward_ios),
                         onTap: () {
-                          // TODO: Navegar a panel de administración
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                  'Panel de administración - Próximamente'),
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => const AdminMetricsScreen(),
                             ),
                           );
                         },
                       ),
                     ),
-
-                  const SizedBox(height: 16),
+                    const SizedBox(height: 16),
+                  ],
 
                   // Botón de cerrar sesión
-                  SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: OutlinedButton.icon(
-                      onPressed: _signOut,
-                      icon: const Icon(Icons.logout),
-                      label: const Text('Cerrar Sesión'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.red,
-                        side: const BorderSide(color: Colors.red),
-                      ),
+                  Card(
+                    color: Colors.red.shade50,
+                    child: ListTile(
+                      leading: const Icon(Icons.logout, color: Colors.red),
+                      title: const Text('Cerrar Sesión'),
+                      subtitle: const Text('Salir de la aplicación'),
+                      trailing: const Icon(Icons.arrow_forward_ios),
+                      onTap: _signOut,
                     ),
                   ),
                 ],
@@ -239,7 +273,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     fontWeight: FontWeight.bold,
                   ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             ...items,
           ],
         ),
@@ -259,23 +293,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Icon(icon, size: 20, color: Colors.grey[600]),
           const SizedBox(width: 12),
           Expanded(
-            flex: 2,
             child: Text(
               label,
-              style: TextStyle(
-                color: Colors.grey[600],
-                fontSize: 14,
-              ),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Colors.grey[600],
+                  ),
             ),
           ),
           Expanded(
-            flex: 3,
             child: Text(
               value,
-              style: const TextStyle(
-                fontWeight: FontWeight.w500,
-                fontSize: 14,
-              ),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w500,
+                  ),
+              textAlign: TextAlign.end,
             ),
           ),
         ],

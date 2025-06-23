@@ -3,8 +3,12 @@ import 'package:intl/intl.dart'; // Ensure this import is present
 import '../models/saved_diagram.dart';
 import '../services/database_service.dart';
 import '../services/auth_service.dart';
+import '../services/metrics_service.dart'; // Nueva importación
 import 'editor_screen.dart';
 import 'profile_screen.dart';
+import 'metrics_screen.dart'; // Nueva importación
+import 'admin_setup_screen.dart'; // Nueva importación para configurar admin
+import 'admin_setup_screen.dart'; // Nueva importación para configurar admin
 
 class LoadDiagramScreen extends StatefulWidget {
   const LoadDiagramScreen({super.key});
@@ -17,6 +21,7 @@ class _LoadDiagramScreenState extends State<LoadDiagramScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final DatabaseService _databaseService = DatabaseService();
+  final MetricsService _metricsService = MetricsService(); // Nuevo servicio
   List<SavedDiagram> _diagrams = [];
   List<SavedDiagram> _templates = [];
   bool _isLoading = true;
@@ -66,6 +71,29 @@ class _LoadDiagramScreenState extends State<LoadDiagramScreen>
       appBar: AppBar(
         title: const Text('Cargar diagrama'),
         actions: [
+          // Botón de configuración de admin (temporal)
+          IconButton(
+            icon: const Icon(Icons.admin_panel_settings),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const AdminSetupScreen(),
+                ),
+              );
+            },
+            tooltip: 'Configurar Administrador',
+          ),
+          IconButton(
+            icon: const Icon(Icons.analytics),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const MetricsScreen(),
+                ),
+              );
+            },
+            tooltip: 'Mis métricas',
+          ),
           IconButton(
             icon: const Icon(Icons.person),
             onPressed: () {
@@ -160,6 +188,19 @@ class _LoadDiagramScreenState extends State<LoadDiagramScreen>
                   )
                 : null,
             onTap: () {
+              // Registrar uso de plantilla si es una plantilla
+              if (!canDelete) {
+                // Las plantillas no se pueden eliminar
+                _metricsService.trackUserAction(
+                  action: 'plantilla_usada',
+                  category: 'templates',
+                  metadata: {
+                    'template_name': item.name,
+                    'template_id': item.id.toString(),
+                  },
+                );
+              }
+
               // En lugar de cerrar la pantalla, navegamos al editor con el diagrama seleccionado
               Navigator.of(context).push(
                 MaterialPageRoute(

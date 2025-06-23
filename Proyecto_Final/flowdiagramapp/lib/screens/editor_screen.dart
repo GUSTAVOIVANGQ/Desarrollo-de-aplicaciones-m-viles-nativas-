@@ -11,6 +11,7 @@ import '../models/diagram_validator.dart';
 import '../models/code_generator.dart';
 import '../models/saved_diagram.dart';
 import '../services/database_service.dart';
+import '../services/metrics_service.dart'; // Nueva importación
 
 class EditorScreen extends StatefulWidget {
   final SavedDiagram? initialDiagram;
@@ -34,6 +35,7 @@ class _EditorScreenState extends State<EditorScreen> {
   // Para control de guardado
   SavedDiagram? currentDiagram;
   final DatabaseService _databaseService = DatabaseService();
+  final MetricsService _metricsService = MetricsService(); // Nuevo servicio
   bool _hasUnsavedChanges = false;
 
   @override
@@ -371,6 +373,13 @@ class _EditorScreenState extends State<EditorScreen> {
       _hasUnsavedChanges = true;
     });
 
+    // Registrar métrica de creación de nodo
+    _metricsService.trackUserAction(
+      action: 'diagrama_creado',
+      category: 'editor',
+      metadata: {'node_type': nodeType.toString()},
+    );
+
     // Mostrar diálogo para editar el nodo recién creado
     _editSelectedNode();
   }
@@ -628,6 +637,19 @@ class _EditorScreenState extends State<EditorScreen> {
       nodes,
       connections,
     );
+
+    // Registrar métrica de validación
+    _metricsService.trackUserAction(
+      action: result.isValid ? 'validacion_exitosa' : 'validacion_fallida',
+      category: 'validation',
+      metadata: {
+        'nodes_count': nodes.length,
+        'connections_count': connections.length,
+        'errors_count': result.errors.length,
+        'warnings_count': result.warnings.length,
+      },
+    );
+
     _showValidationDialog(result);
   }
 
@@ -658,6 +680,19 @@ class _EditorScreenState extends State<EditorScreen> {
       connections,
       ProgrammingLanguage.c,
     );
+
+    // Registrar métrica de generación de código
+    _metricsService.trackUserAction(
+      action: 'codigo_generado',
+      category: 'code_generation',
+      metadata: {
+        'nodes_count': nodes.length,
+        'connections_count': connections.length,
+        'code_lines': code.split('\n').length,
+        'language': 'c',
+      },
+    );
+
     _showCodeDialog(code);
   }
 

@@ -295,8 +295,68 @@ class AuthService {
   // Verificar si el usuario actual es administrador
   bool get isAdmin => _currentUser?.isAdmin ?? false;
 
-  // Verificar si hay un usuario autenticado
-  bool get isAuthenticated => _currentUser != null;
+  // Promover un usuario a administrador (solo para desarrollo/configuración inicial)
+  Future<void> promoteToAdmin(String email) async {
+    final hasInternet = await _hasInternetConnection();
+    if (!hasInternet) {
+      throw Exception('Se requiere conexión a internet para promover usuarios');
+    }
+
+    try {
+      // Buscar usuario por email
+      final querySnapshot = await _firestore
+          .collection('users')
+          .where('email', isEqualTo: email)
+          .limit(1)
+          .get();
+
+      if (querySnapshot.docs.isNotEmpty) {
+        final userDoc = querySnapshot.docs.first;
+        await userDoc.reference.update({'role': 'admin'});
+
+        // Si es el usuario actual, actualizar en memoria
+        if (_currentUser?.email == email) {
+          _currentUser = _currentUser!.copyWith(role: UserRole.admin);
+          await _saveUserToCache(_currentUser!);
+        }
+
+        print('✅ Usuario $email promovido a administrador');
+      } else {
+        throw Exception('Usuario con email $email no encontrado');
+      }
+    } catch (e) {
+      throw Exception('Error promoviendo usuario: ${e.toString()}');
+    }
+  }
+
+  // Crear usuario administrador por defecto
+  Future<void> createDefaultAdmin() async {
+    const adminEmail = 'admin@flowdiagram.com';
+    const adminPassword = 'Admin123456';
+    const adminName = 'Administrador';
+
+    try {
+      // Verificar si ya existe
+      final exists = await checkIfEmailExists(adminEmail);
+      if (exists) {
+        print('ℹ️ Usuario administrador ya existe');
+        return;
+      }
+
+      // Crear usuario administrador
+      await registerWithEmailPassword(
+        email: adminEmail,
+        password: adminPassword,
+        displayName: adminName,
+        role: UserRole.admin,
+      );
+
+      print('✅ Usuario administrador creado: $adminEmail');
+      print('🔑 Contraseña: $adminPassword');
+    } catch (e) {
+      print('❌ Error creando administrador: $e');
+    }
+  }
 
   // MÉTODOS DE DIAGNÓSTICO Y LIMPIEZA
 
