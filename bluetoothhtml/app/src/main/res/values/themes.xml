@@ -1,8 +1,35 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
+    <!-- Tema Base -->
     <style name="Base.Theme.Bluetoothhtml" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your light theme here. -->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+        <!-- Colores por defecto -->
+    </style>
+
+    <!-- Tema IPN Guinda Claro -->
+    <style name="Theme.IPN.Guinda" parent="Theme.Material3.Light.NoActionBar">
+        <item name="colorPrimary">@color/ipn_guinda_primary</item>
+        <item name="colorPrimaryVariant">@color/ipn_guinda_primary_variant</item>
+        <item name="colorSecondary">@color/ipn_guinda_secondary</item>
+        <item name="colorSecondaryVariant">@color/ipn_guinda_secondary_variant</item>
+        <item name="colorSurface">@color/ipn_guinda_surface</item>
+        <item name="android:colorBackground">@color/ipn_guinda_background</item>
+        <item name="colorOnPrimary">@color/ipn_guinda_on_primary</item>
+        <item name="colorOnSecondary">@color/ipn_guinda_on_secondary</item>
+        <item name="colorOnSurface">@color/ipn_guinda_on_surface</item>
+        <item name="colorOnBackground">@color/ipn_guinda_on_background</item>
+    </style>
+    
+    <!-- Tema ESCOM Azul Claro -->
+    <style name="Theme.ESCOM.Azul" parent="Theme.Material3.Light.NoActionBar">
+        <item name="colorPrimary">@color/escom_azul_primary</item>
+        <item name="colorPrimaryVariant">@color/escom_azul_primary_variant</item>
+        <item name="colorSecondary">@color/escom_azul_secondary</item>
+        <item name="colorSecondaryVariant">@color/escom_azul_secondary_variant</item>
+        <item name="colorSurface">@color/escom_azul_surface</item>
+        <item name="android:colorBackground">@color/escom_azul_background</item>
+        <item name="colorOnPrimary">@color/escom_azul_on_primary</item>
+        <item name="colorOnSecondary">@color/escom_azul_on_secondary</item>
+        <item name="colorOnSurface">@color/escom_azul_on_surface</item>
+        <item name="colorOnBackground">@color/escom_azul_on_background</item>
     </style>
 
     <style name="Theme.Bluetoothhtml" parent="Base.Theme.Bluetoothhtml" />

@@ -1,7 +1,34 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
+    <!-- Tema Base Oscuro -->
     <style name="Base.Theme.Bluetoothhtml" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Customize your dark theme here. -->
-        <!-- <item name="colorPrimary">@color/my_dark_primary</item> -->
+        <!-- Colores por defecto -->
+    </style>
+    
+    <!-- Tema IPN Guinda Oscuro -->
+    <style name="Theme.IPN.Guinda" parent="Theme.Material3.Dark.NoActionBar">
+        <item name="colorPrimary">@color/ipn_guinda_primary_dark</item>
+        <item name="colorPrimaryVariant">@color/ipn_guinda_primary_variant_dark</item>
+        <item name="colorSecondary">@color/ipn_guinda_secondary_dark</item>
+        <item name="colorSecondaryVariant">@color/ipn_guinda_secondary_variant_dark</item>
+        <item name="colorSurface">@color/ipn_guinda_surface_dark</item>
+        <item name="android:colorBackground">@color/ipn_guinda_background_dark</item>
+        <item name="colorOnPrimary">@color/ipn_guinda_on_primary_dark</item>
+        <item name="colorOnSecondary">@color/ipn_guinda_on_secondary_dark</item>
+        <item name="colorOnSurface">@color/ipn_guinda_on_surface_dark</item>
+        <item name="colorOnBackground">@color/ipn_guinda_on_background_dark</item>
+    </style>
+    
+    <!-- Tema ESCOM Azul Oscuro -->
+    <style name="Theme.ESCOM.Azul" parent="Theme.Material3.Dark.NoActionBar">
+        <item name="colorPrimary">@color/escom_azul_primary_dark</item>
+        <item name="colorPrimaryVariant">@color/escom_azul_primary_variant_dark</item>
+        <item name="colorSecondary">@color/escom_azul_secondary_dark</item>
+        <item name="colorSecondaryVariant">@color/escom_azul_secondary_variant_dark</item>
+        <item name="colorSurface">@color/escom_azul_surface_dark</item>
+        <item name="android:colorBackground">@color/escom_azul_background_dark</item>
+        <item name="colorOnPrimary">@color/escom_azul_on_primary_dark</item>
+        <item name="colorOnSecondary">@color/escom_azul_on_secondary_dark</item>
+        <item name="colorOnSurface">@color/escom_azul_on_surface_dark</item>
+        <item name="colorOnBackground">@color/escom_azul_on_background_dark</item>
     </style>
 </resources>

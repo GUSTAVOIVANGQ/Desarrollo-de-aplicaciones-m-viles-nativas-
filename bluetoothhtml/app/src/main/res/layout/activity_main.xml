@@ -14,6 +14,14 @@
         android:gravity="center"
         android:layout_marginBottom="16dp" />
 
+    <Button
+        android:id="@+id/themeButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/cambiar_tema"
+        android:layout_marginBottom="8dp"
+        android:backgroundTint="#9C27B0" />
+
     <EditText
         android:id="@+id/urlInput"
         android:layout_width="match_parent"
@@ -21,6 +29,95 @@
         android:hint="Ingresa la URL (ej: www.google.com)"
         android:inputType="textUri"
         android:layout_marginBottom="8dp" />
+
+    <!-- Botones de navegador -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="8dp">
+
+        <Button
+            android:id="@+id/backButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/atras"
+            android:layout_marginEnd="2dp"
+            android:backgroundTint="#607D8B"
+            android:textSize="11sp"
+            android:minWidth="48dp"
+            android:ellipsize="end"
+            android:singleLine="true"
+            android:padding="8dp"
+            android:elevation="4dp"
+            android:background="@drawable/rounded_button" />
+
+        <Button
+            android:id="@+id/forwardButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/adelante"
+            android:layout_marginStart="2dp"
+            android:layout_marginEnd="2dp"
+            android:backgroundTint="#607D8B"
+            android:textSize="11sp"
+            android:minWidth="48dp"
+            android:ellipsize="end"
+            android:singleLine="true"
+            android:padding="8dp"
+            android:elevation="4dp"
+            android:background="@drawable/rounded_button" />
+
+        <Button
+            android:id="@+id/reloadButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/recargar"
+            android:layout_marginStart="2dp"
+            android:layout_marginEnd="2dp"
+            android:textSize="11sp"
+            android:minWidth="48dp"
+            android:ellipsize="end"
+            android:singleLine="true"
+            android:padding="8dp"
+            android:elevation="4dp"
+            android:background="@drawable/rounded_reload_button" />
+
+        <Button
+            android:id="@+id/bookmarkButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/marcadores"
+            android:layout_marginStart="2dp"
+            android:layout_marginEnd="2dp"
+            android:textSize="10sp"
+            android:minWidth="48dp"
+            android:ellipsize="end"
+            android:singleLine="true"
+            android:padding="8dp"
+            android:elevation="4dp"
+            android:background="@drawable/rounded_bookmark_button" />
+
+        <Button
+            android:id="@+id/historyButton"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/historial"
+            android:layout_marginStart="2dp"
+            android:textSize="11sp"
+            android:minWidth="48dp"
+            android:ellipsize="end"
+            android:singleLine="true"
+            android:padding="8dp"
+            android:elevation="4dp"
+            android:background="@drawable/rounded_history_button" />
+
+    </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"

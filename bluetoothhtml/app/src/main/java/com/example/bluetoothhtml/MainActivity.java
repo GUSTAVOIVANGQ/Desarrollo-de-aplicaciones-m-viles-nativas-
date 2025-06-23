@@ -1,6 +1,8 @@
 package com.example.bluetoothhtml;
 
 import android.Manifest;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothServerSocket;
@@ -9,6 +11,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -17,8 +20,10 @@ import android.os.Looper;
 import android.util.Log;
 import android.webkit.WebView;
 import android.widget.*;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
 
 import java.io.*;
@@ -37,7 +42,8 @@ public class MainActivity extends AppCompatActivity {
 
     private BluetoothAdapter bluetoothAdapter;
     private EditText urlInput;
-    private Button serverButton, clientButton, refreshButton;
+    private Button serverButton, clientButton, refreshButton, themeButton;
+    private Button backButton, forwardButton, reloadButton, bookmarkButton, historyButton;
     private ListView devicesList;
     private WebView webView;
     private TextView statusText;
@@ -48,24 +54,64 @@ public class MainActivity extends AppCompatActivity {
     private AcceptThread acceptThread;
     private boolean isServerRunning = false;
 
+    // Variables para manejo de temas
+    private SharedPreferences themePrefs;
+    private static final String THEME_PREFS = "theme_prefs";
+    private static final String CURRENT_THEME = "current_theme";
+    private static final int THEME_IPN = 0;
+    private static final int THEME_ESCOM = 1;
+
+    // Variables para notificaciones
+    private static final String CHANNEL_ID = "bluetooth_html_channel";
+    private static final int NOTIFICATION_ID = 1;
+    private NotificationManager notificationManager;
+    private int notificationCounter = 0;
+
+    // Variables para navegación local
+    private SharedPreferences browserPrefs;
+    private static final String BROWSER_PREFS = "browser_prefs";
+    private static final String HISTORY_KEY = "navigation_history";
+    private static final String BOOKMARKS_KEY = "bookmarks";
+    private static final String HTML_STORAGE_KEY = "html_storage_";
+    
+    private ArrayList<String> navigationHistory = new ArrayList<>();
+    private ArrayList<String> bookmarks = new ArrayList<>();
+    private int currentHistoryIndex = -1;
+
     private Handler mainHandler = new Handler(Looper.getMainLooper());
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        // Aplicar tema antes de setContentView
+        applyTheme();
+        
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        createNotificationChannel();
         initViews();
+        initBrowserStorage();
         setupBluetooth();
         setupListeners();
         requestPermissions();
     }
 
     private void initViews() {
+        themePrefs = getSharedPreferences(THEME_PREFS, MODE_PRIVATE);
+        
         urlInput = findViewById(R.id.urlInput);
         serverButton = findViewById(R.id.serverButton);
         clientButton = findViewById(R.id.clientButton);
         refreshButton = findViewById(R.id.refreshButton);
+        themeButton = findViewById(R.id.themeButton);
+        
+        // Botones de navegador
+        backButton = findViewById(R.id.backButton);
+        forwardButton = findViewById(R.id.forwardButton);
+        reloadButton = findViewById(R.id.reloadButton);
+        bookmarkButton = findViewById(R.id.bookmarkButton);
+        historyButton = findViewById(R.id.historyButton);
+        
         devicesList = findViewById(R.id.devicesList);
         webView = findViewById(R.id.webView);
         statusText = findViewById(R.id.statusText);
@@ -75,12 +121,76 @@ public class MainActivity extends AppCompatActivity {
 
         webView.getSettings().setJavaScriptEnabled(true);
         urlInput.setText("www.google.com");
+        
+        updateThemeButtonText();
+        updateNavigationButtons();
+    }
+
+    private void initBrowserStorage() {
+        browserPrefs = getSharedPreferences(BROWSER_PREFS, MODE_PRIVATE);
+        loadNavigationHistory();
+        loadBookmarks();
+    }
+
+    private void loadNavigationHistory() {
+        String historyJson = browserPrefs.getString(HISTORY_KEY, "");
+        navigationHistory.clear();
+        if (!historyJson.isEmpty()) {
+            String[] urls = historyJson.split("\\|");
+            for (String url : urls) {
+                if (!url.trim().isEmpty()) {
+                    navigationHistory.add(url.trim());
+                }
+            }
+        }
+        currentHistoryIndex = navigationHistory.size() - 1;
+    }
+
+    private void saveNavigationHistory() {
+        StringBuilder historyBuilder = new StringBuilder();
+        for (int i = 0; i < navigationHistory.size(); i++) {
+            if (i > 0) historyBuilder.append("|");
+            historyBuilder.append(navigationHistory.get(i));
+        }
+        browserPrefs.edit().putString(HISTORY_KEY, historyBuilder.toString()).apply();
+    }
+
+    private void loadBookmarks() {
+        String bookmarksJson = browserPrefs.getString(BOOKMARKS_KEY, "");
+        bookmarks.clear();
+        if (!bookmarksJson.isEmpty()) {
+            String[] urls = bookmarksJson.split("\\|");
+            for (String url : urls) {
+                if (!url.trim().isEmpty()) {
+                    bookmarks.add(url.trim());
+                }
+            }
+        }
+    }
+
+    private void saveBookmarks() {
+        StringBuilder bookmarksBuilder = new StringBuilder();
+        for (int i = 0; i < bookmarks.size(); i++) {
+            if (i > 0) bookmarksBuilder.append("|");
+            bookmarksBuilder.append(bookmarks.get(i));
+        }
+        browserPrefs.edit().putString(BOOKMARKS_KEY, bookmarksBuilder.toString()).apply();
+    }
+
+    private void updateNavigationButtons() {
+        // Actualizar estado de los botones de navegación
+        backButton.setEnabled(currentHistoryIndex > 0);
+        forwardButton.setEnabled(currentHistoryIndex < navigationHistory.size() - 1);
+        
+        // Cambiar opacidad visual según el estado
+        backButton.setAlpha(backButton.isEnabled() ? 1.0f : 0.5f);
+        forwardButton.setAlpha(forwardButton.isEnabled() ? 1.0f : 0.5f);
     }
 
     private void setupBluetooth() {
         bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
         if (bluetoothAdapter == null) {
-            Toast.makeText(this, "Bluetooth no soportado en este dispositivo", Toast.LENGTH_LONG).show();
+            showToastWithNotification("Bluetooth no soportado en este dispositivo");
             return;
         }
 
@@ -101,6 +211,14 @@ public class MainActivity extends AppCompatActivity {
 
         clientButton.setOnClickListener(v -> startClient());
         refreshButton.setOnClickListener(v -> refreshDevices());
+        themeButton.setOnClickListener(v -> showThemeDialog());
+
+        // Listeners para botones de navegador con funcionalidad real
+        backButton.setOnClickListener(v -> navigateBack());
+        forwardButton.setOnClickListener(v -> navigateForward());
+        reloadButton.setOnClickListener(v -> reloadCurrentPage());
+        bookmarkButton.setOnClickListener(v -> showBookmarksDialog());
+        historyButton.setOnClickListener(v -> showHistoryDialog());
 
         devicesList.setOnItemClickListener((parent, view, position, id) -> {
             if (position < discoveredDevices.size()) {
@@ -109,7 +227,7 @@ public class MainActivity extends AppCompatActivity {
                 if (!url.isEmpty()) {
                     sendUrlToDevice(device, url);
                 } else {
-                    Toast.makeText(this, "Ingresa una URL primero", Toast.LENGTH_SHORT).show();
+                    showToastWithNotification("Ingresa una URL primero");
                 }
             }
         });
@@ -179,7 +297,7 @@ public class MainActivity extends AppCompatActivity {
                 loadPairedDevices();
             } else {
                 statusText.setText("Permisos necesarios para funcionar");
-                Toast.makeText(this, "La aplicación necesita permisos de Bluetooth para funcionar", Toast.LENGTH_LONG).show();
+                showToastWithNotification("La aplicación necesita permisos de Bluetooth para funcionar");
             }
         }
     }
@@ -262,7 +380,9 @@ public class MainActivity extends AppCompatActivity {
         if (!url.startsWith("http://") && !url.startsWith("https://")) {
             url = "http://" + url;
         }
+
         final String urlToSend = url + "\n";
+        final String finalUrl = url;
 
         statusText.setText("Conectando a " + device.getName() + "...");
 
@@ -323,15 +443,18 @@ public class MainActivity extends AppCompatActivity {
 
                 String html = htmlBuilder.toString().trim();
 
+//                final String finalUrl = url;
                 mainHandler.post(() -> {
                     if (html.isEmpty()) {
                         statusText.setText("No se recibió respuesta del servidor");
-                        Toast.makeText(this, "El servidor no respondió", Toast.LENGTH_LONG).show();
+                        showToastWithNotification("El servidor no respondió");
                     } else if (html.startsWith("ERROR:")) {
                         statusText.setText("Error del servidor");
-                        Toast.makeText(this, html, Toast.LENGTH_LONG).show();
+                        showToastWithNotification(html);
                     } else {
-                        webView.loadDataWithBaseURL(null, html, "text/html", "UTF-8", null);
+                        storeHtmlContent(finalUrl, html);
+                        addToNavigationHistory(finalUrl);
+                        displayHtmlContent(html);
                         statusText.setText("HTML recibido y mostrado correctamente");
                     }
                 });
@@ -346,7 +469,7 @@ public class MainActivity extends AppCompatActivity {
                     } else if (e.getMessage().contains("Connection refused")) {
                         errorMsg = "Error: Conexión rechazada - Verifica que el servidor esté activo";
                     }
-                    Toast.makeText(this, errorMsg, Toast.LENGTH_LONG).show();
+                    showToastWithNotification(errorMsg);
                 });
             } finally {
                 try {
@@ -665,6 +788,306 @@ public class MainActivity extends AppCompatActivity {
                 statusText.setText("Dispositivo visible por " + resultCode + " segundos");
             }
         }
+    }
+
+    // Métodos para manejo de notificaciones
+    private void createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            CharSequence name = "Bluetooth HTML Notifications";
+            String description = "Notificaciones de la aplicación Bluetooth HTML";
+            int importance = NotificationManager.IMPORTANCE_DEFAULT;
+            NotificationChannel channel = new NotificationChannel(CHANNEL_ID, name, importance);
+            channel.setDescription(description);
+            
+            notificationManager = getSystemService(NotificationManager.class);
+            notificationManager.createNotificationChannel(channel);
+        } else {
+            notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        }
+    }
+    
+    private void showToastWithNotification(String message) {
+        // Mostrar Toast
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+        
+        // Mostrar notificación con el mismo mensaje
+        showNotification(message);
+    }
+    
+    private void showNotification(String message) {
+        // Verificar permiso de notificaciones para Android 13+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.POST_NOTIFICATIONS}, 100);
+                return;
+            }
+        }
+        
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
+                .setSmallIcon(android.R.drawable.ic_dialog_info)
+                .setContentTitle("Bluetooth HTML")
+                .setContentText(message)
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .setAutoCancel(true);
+
+        notificationManager.notify(NOTIFICATION_ID + notificationCounter++, builder.build());
+    }
+
+    // Métodos para manejo de temas
+    private void applyTheme() {
+        themePrefs = getSharedPreferences(THEME_PREFS, MODE_PRIVATE);
+        int currentTheme = themePrefs.getInt(CURRENT_THEME, THEME_IPN);
+        
+        switch (currentTheme) {
+            case THEME_IPN:
+                setTheme(R.style.Theme_IPN_Guinda);
+                break;
+            case THEME_ESCOM:
+                setTheme(R.style.Theme_ESCOM_Azul);
+                break;
+        }
+    }
+    
+    private void showThemeDialog() {
+        String[] themes = {getString(R.string.tema_ipn), getString(R.string.tema_escom)};
+        int currentTheme = themePrefs.getInt(CURRENT_THEME, THEME_IPN);
+        
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle(getString(R.string.cambiar_tema))
+                .setSingleChoiceItems(themes, currentTheme, null)
+                .setPositiveButton("OK", (dialog, which) -> {
+                    int selectedTheme = ((AlertDialog) dialog).getListView().getCheckedItemPosition();
+                    if (selectedTheme != currentTheme) {
+                        changeTheme(selectedTheme);
+                    }
+                })
+                .setNegativeButton("Cancelar", null)
+                .show();
+    }
+    
+    private void changeTheme(int themeIndex) {
+        SharedPreferences.Editor editor = themePrefs.edit();
+        editor.putInt(CURRENT_THEME, themeIndex);
+        editor.apply();
+        
+        String themeName = themeIndex == THEME_IPN ? getString(R.string.tema_ipn) : getString(R.string.tema_escom);
+        showToastWithNotification(getString(R.string.tema_aplicado, themeName));
+        
+        // Reiniciar la actividad para aplicar el nuevo tema
+        recreate();
+    }
+    
+    private void updateThemeButtonText() {
+        int currentTheme = themePrefs.getInt(CURRENT_THEME, THEME_IPN);
+        String currentThemeName = currentTheme == THEME_IPN ? getString(R.string.tema_ipn) : getString(R.string.tema_escom);
+        themeButton.setText(getString(R.string.cambiar_tema) + " (" + currentThemeName + ")");
+    }
+
+    // Métodos para funcionalidad del navegador
+    private void storeHtmlContent(String url, String htmlContent) {
+        String key = HTML_STORAGE_KEY + url.hashCode();
+        browserPrefs.edit().putString(key, htmlContent).apply();
+    }
+
+    private String getStoredHtmlContent(String url) {
+        String key = HTML_STORAGE_KEY + url.hashCode();
+        return browserPrefs.getString(key, null);
+    }
+
+    private void addToNavigationHistory(String url) {
+        // Evitar duplicados consecutivos
+        if (navigationHistory.isEmpty() || !navigationHistory.get(navigationHistory.size() - 1).equals(url)) {
+            navigationHistory.add(url);
+            currentHistoryIndex = navigationHistory.size() - 1;
+            saveNavigationHistory();
+            updateNavigationButtons();
+        }
+    }
+
+    private void displayHtmlContent(String htmlContent) {
+        webView.loadDataWithBaseURL(null, htmlContent, "text/html", "UTF-8", null);
+    }
+
+    private void navigateBack() {
+        if (currentHistoryIndex > 0) {
+            currentHistoryIndex--;
+            String url = navigationHistory.get(currentHistoryIndex);
+            String htmlContent = getStoredHtmlContent(url);
+            
+            if (htmlContent != null) {
+                displayHtmlContent(htmlContent);
+                urlInput.setText(url);
+                statusText.setText("Navegando atrás: " + url);
+                updateNavigationButtons();
+            } else {
+                showToastWithNotification("No se encontró el contenido HTML almacenado");
+            }
+        }
+    }
+
+    private void navigateForward() {
+        if (currentHistoryIndex < navigationHistory.size() - 1) {
+            currentHistoryIndex++;
+            String url = navigationHistory.get(currentHistoryIndex);
+            String htmlContent = getStoredHtmlContent(url);
+            
+            if (htmlContent != null) {
+                displayHtmlContent(htmlContent);
+                urlInput.setText(url);
+                statusText.setText("Navegando adelante: " + url);
+                updateNavigationButtons();
+            } else {
+                showToastWithNotification("No se encontró el contenido HTML almacenado");
+            }
+        }
+    }
+
+    private void reloadCurrentPage() {
+        if (currentHistoryIndex >= 0 && currentHistoryIndex < navigationHistory.size()) {
+            String url = navigationHistory.get(currentHistoryIndex);
+            String htmlContent = getStoredHtmlContent(url);
+            
+            if (htmlContent != null) {
+                displayHtmlContent(htmlContent);
+                statusText.setText("Página recargada: " + url);
+                showToastWithNotification("Página recargada desde almacenamiento local");
+            } else {
+                showToastWithNotification("No hay página para recargar");
+            }
+        } else {
+            showToastWithNotification("No hay página para recargar");
+        }
+    }
+
+    private void showHistoryDialog() {
+        if (navigationHistory.isEmpty()) {
+            showToastWithNotification("No hay historial de navegación");
+            return;
+        }
+
+        String[] historyArray = navigationHistory.toArray(new String[0]);
+        
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Historial de Navegación")
+                .setItems(historyArray, (dialog, which) -> {
+                    String selectedUrl = historyArray[which];
+                    String htmlContent = getStoredHtmlContent(selectedUrl);
+                    
+                    if (htmlContent != null) {
+                        currentHistoryIndex = which;
+                        displayHtmlContent(htmlContent);
+                        urlInput.setText(selectedUrl);
+                        statusText.setText("Navegando desde historial: " + selectedUrl);
+                        updateNavigationButtons();
+                    } else {
+                        showToastWithNotification("Contenido HTML no disponible para esta URL");
+                    }
+                })
+                .setNegativeButton("Cancelar", null)
+                .setNeutralButton("Limpiar Historial", (dialog, which) -> {
+                    new AlertDialog.Builder(this)
+                            .setTitle("Confirmar")
+                            .setMessage("¿Estás seguro de que quieres limpiar todo el historial?")
+                            .setPositiveButton("Sí", (d, w) -> clearHistory())
+                            .setNegativeButton("No", null)
+                            .show();
+                })
+                .show();
+    }
+
+    private void showBookmarksDialog() {
+        if (bookmarks.isEmpty()) {
+            showToastWithNotification("No hay marcadores guardados");
+            showAddBookmarkDialog();
+            return;
+        }
+
+        String[] bookmarksArray = bookmarks.toArray(new String[0]);
+        
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Marcadores")
+                .setItems(bookmarksArray, (dialog, which) -> {
+                    String selectedUrl = bookmarksArray[which];
+                    String htmlContent = getStoredHtmlContent(selectedUrl);
+                    
+                    if (htmlContent != null) {
+                        displayHtmlContent(htmlContent);
+                        urlInput.setText(selectedUrl);
+                        addToNavigationHistory(selectedUrl);
+                        statusText.setText("Navegando desde marcador: " + selectedUrl);
+                    } else {
+                        showToastWithNotification("Contenido HTML no disponible para este marcador");
+                    }
+                })
+                .setPositiveButton("Agregar Marcador", (dialog, which) -> showAddBookmarkDialog())
+                .setNegativeButton("Cancelar", null)
+                .setNeutralButton("Eliminar", (dialog, which) -> showDeleteBookmarkDialog())
+                .show();
+    }
+
+    private void showAddBookmarkDialog() {
+        String currentUrl = urlInput.getText().toString().trim();
+        
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        EditText editText = new EditText(this);
+        editText.setText(currentUrl);
+        editText.setHint("Ingresa la URL a marcar");
+        
+        builder.setTitle("Agregar Marcador")
+                .setView(editText)
+                .setPositiveButton("Agregar", (dialog, which) -> {
+                    String url = editText.getText().toString().trim();
+                    if (!url.isEmpty()) {
+                        addBookmark(url);
+                    }
+                })
+                .setNegativeButton("Cancelar", null)
+                .show();
+    }
+
+    private void showDeleteBookmarkDialog() {
+        if (bookmarks.isEmpty()) {
+            showToastWithNotification("No hay marcadores para eliminar");
+            return;
+        }
+
+        String[] bookmarksArray = bookmarks.toArray(new String[0]);
+        boolean[] checkedItems = new boolean[bookmarksArray.length];
+        
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Eliminar Marcadores")
+                .setMultiChoiceItems(bookmarksArray, checkedItems, (dialog, which, isChecked) -> {
+                    checkedItems[which] = isChecked;
+                })
+                .setPositiveButton("Eliminar Seleccionados", (dialog, which) -> {
+                    for (int i = checkedItems.length - 1; i >= 0; i--) {
+                        if (checkedItems[i]) {
+                            bookmarks.remove(i);
+                        }
+                    }
+                    saveBookmarks();
+                    showToastWithNotification("Marcadores eliminados");
+                })
+                .setNegativeButton("Cancelar", null)
+                .show();
+    }
+
+    private void addBookmark(String url) {
+        if (!bookmarks.contains(url)) {
+            bookmarks.add(url);
+            saveBookmarks();
+            showToastWithNotification("Marcador agregado: " + url);
+        } else {
+            showToastWithNotification("Este sitio ya está en marcadores");
+        }
+    }
+
+    private void clearHistory() {
+        navigationHistory.clear();
+        currentHistoryIndex = -1;
+        saveNavigationHistory();
+        updateNavigationButtons();
+        showToastWithNotification("Historial limpiado");
     }
 
     @Override

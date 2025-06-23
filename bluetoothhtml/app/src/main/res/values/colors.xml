@@ -2,4 +2,52 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    
+    <!-- Tema IPN Guinda -->
+    <color name="ipn_guinda_primary">#8B1538</color>
+    <color name="ipn_guinda_primary_variant">#5D0E25</color>
+    <color name="ipn_guinda_secondary">#FFD700</color>
+    <color name="ipn_guinda_secondary_variant">#E6C200</color>
+    <color name="ipn_guinda_surface">#F5F5F5</color>
+    <color name="ipn_guinda_background">#FFFFFF</color>
+    <color name="ipn_guinda_on_primary">#FFFFFF</color>
+    <color name="ipn_guinda_on_secondary">#000000</color>
+    <color name="ipn_guinda_on_surface">#000000</color>
+    <color name="ipn_guinda_on_background">#000000</color>
+    
+    <!-- Tema IPN Guinda Oscuro -->
+    <color name="ipn_guinda_primary_dark">#A31B40</color>
+    <color name="ipn_guinda_primary_variant_dark">#8B1538</color>
+    <color name="ipn_guinda_secondary_dark">#FFD700</color>
+    <color name="ipn_guinda_secondary_variant_dark">#E6C200</color>
+    <color name="ipn_guinda_surface_dark">#1F1F1F</color>
+    <color name="ipn_guinda_background_dark">#121212</color>
+    <color name="ipn_guinda_on_primary_dark">#FFFFFF</color>
+    <color name="ipn_guinda_on_secondary_dark">#000000</color>
+    <color name="ipn_guinda_on_surface_dark">#FFFFFF</color>
+    <color name="ipn_guinda_on_background_dark">#FFFFFF</color>
+    
+    <!-- Tema ESCOM Azul -->
+    <color name="escom_azul_primary">#1976D2</color>
+    <color name="escom_azul_primary_variant">#1565C0</color>
+    <color name="escom_azul_secondary">#FFC107</color>
+    <color name="escom_azul_secondary_variant">#FF8F00</color>
+    <color name="escom_azul_surface">#F5F5F5</color>
+    <color name="escom_azul_background">#FFFFFF</color>
+    <color name="escom_azul_on_primary">#FFFFFF</color>
+    <color name="escom_azul_on_secondary">#000000</color>
+    <color name="escom_azul_on_surface">#000000</color>
+    <color name="escom_azul_on_background">#000000</color>
+    
+    <!-- Tema ESCOM Azul Oscuro -->
+    <color name="escom_azul_primary_dark">#2196F3</color>
+    <color name="escom_azul_primary_variant_dark">#1976D2</color>
+    <color name="escom_azul_secondary_dark">#FFC107</color>
+    <color name="escom_azul_secondary_variant_dark">#FF8F00</color>
+    <color name="escom_azul_surface_dark">#1F1F1F</color>
+    <color name="escom_azul_background_dark">#121212</color>
+    <color name="escom_azul_on_primary_dark">#FFFFFF</color>
+    <color name="escom_azul_on_secondary_dark">#000000</color>
+    <color name="escom_azul_on_surface_dark">#FFFFFF</color>
+    <color name="escom_azul_on_background_dark">#FFFFFF</color>
 </resources>

@@ -1,3 +1,26 @@
 <resources>
     <string name="app_name">bluetoothhtml</string>
+    
+    <!-- Strings para temas -->
+    <string name="tema_ipn">Tema IPN</string>
+    <string name="tema_escom">Tema ESCOM</string>
+    <string name="cambiar_tema">Cambiar Tema</string>
+    <string name="tema_aplicado">Tema aplicado: %1$s</string>
+    
+    <!-- Strings para navegador -->
+    <string name="atras">Atrás</string>
+    <string name="adelante">Adelante</string>
+    <string name="recargar">Recargar</string>
+    <string name="marcadores">Marcadores</string>
+    <string name="historial">Historial</string>
+    
+    <!-- Strings para navegación local -->
+    <string name="historial_vacio">No hay historial de navegación</string>
+    <string name="marcadores_vacios">No hay marcadores guardados</string>
+    <string name="contenido_no_disponible">Contenido HTML no disponible</string>
+    <string name="pagina_recargada">Página recargada desde almacenamiento local</string>
+    <string name="marcador_agregado">Marcador agregado: %1$s</string>
+    <string name="marcador_existe">Este sitio ya está en marcadores</string>
+    <string name="historial_limpiado">Historial limpiado</string>
+    <string name="confirmar_limpiar_historial">¿Estás seguro de que quieres limpiar todo el historial?</string>
 </resources>
